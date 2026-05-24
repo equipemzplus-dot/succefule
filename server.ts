@@ -269,6 +269,71 @@ async function startServer() {
     }
   });
 
+  // Chariow API products endpoint with CORS / OPTIONS support
+  app.use('/api/chariow/products', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
+  app.get('/api/chariow/products', async (req, res) => {
+    const apiKeys = [
+      process.env.CHARIOW_API_KEY,
+      process.env.VITE_CHARIOW_API_KEY,
+      process.env.CHARIOZ_API_KEY,
+      process.env.VITE_CHARIOZ_API_KEY
+    ];
+    const apiKey = apiKeys.find(key => key && key.trim() !== '');
+
+    if (!apiKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'missing_api_key',
+        message: "La clé API Chariow (CHARIOW_API_KEY) n'a pas été trouvée dans les variables d'environnement."
+      });
+    }
+
+    try {
+      console.log('[Chariow API Products] Fetching products list...');
+      const response = await fetch('https://api.chariow.com/v1/products', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey.trim()}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      const contentType = response.headers.get('content-type');
+      let data = null;
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json().catch(() => null);
+      } else {
+        data = await response.text().catch(() => null);
+      }
+      
+      return res.json({
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        detectedKeyLength: apiKey.length,
+        detectedKeyPreview: apiKey.length > 8 ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : '****'
+      });
+    } catch (error: any) {
+      console.error('[Chariow API Products] Error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'fetch_error',
+        message: "Erreur de connexion lors du chargement des produits de l'API Chariow.",
+        details: error.message
+      });
+    }
+  });
+
   // Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
