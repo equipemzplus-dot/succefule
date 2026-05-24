@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "LivePulseEvent": {
+      "title": "Live Pulse Event",
+      "description": "Real-time activity events for the dashboard pulse.",
+      "type": "object",
+      "properties": {
+        "user_name": { "type": "string" },
+        "type": { "type": "string", "enum": ["gain", "join", "premium", "coaching"] },
+        "detail": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["user_name", "type", "detail", "created_at"]
+    },
+    "AppConfig": {
+      "title": "App Configuration",
+      "description": "Global settings for the application.",
+      "type": "object",
+      "properties": {
+        "app_name": { "type": "string" },
+        "icon_base64": { "type": "string" },
+        "is_active": { "type": "boolean" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Announcement": {
+      "title": "Marketing Announcement",
+      "description": "Global announcements for users.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "button_text": { "type": "string" },
+        "target_tab": { "type": "string" },
+        "is_active": { "type": "boolean" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "MemberEvolution": {
+      "title": "Member Evolution",
+      "description": "A progression event shared by a member.",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "user_name": { "type": "string" },
+        "user_avatar": { "type": "string" },
+        "old_level": { "type": "string" },
+        "new_level": { "type": "string" },
+        "type": { "type": "string", "enum": ["level_up", "formation_completed", "achievement_unlocked"] },
+        "achievement_title": { "type": "string" },
+        "message": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "reactions": { "type": "object" },
+        "comment_count": { "type": "number" }
+      },
+      "required": ["user_id", "user_name", "type", "created_at"]
+    }
+  },
+  "firestore": {
+    "/live_pulse/{eventId}": {
+      "schema": "LivePulseEvent",
+      "description": "Real-time dashboard events."
+    },
+    "/mz_app_config/main-config": {
+      "schema": "AppConfig",
+      "description": "Global app parameters."
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "System-wide marketing messages."
+    },
+    "/evolutions/{evolutionId}": {
+      "schema": "MemberEvolution",
+      "description": "Community progression wall."
+    }
+  }
+}

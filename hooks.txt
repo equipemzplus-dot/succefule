@@ -1,0 +1,871 @@
+components/UI.tsx:2:import React, { useState, useEffect } from 'react';
+components/UI.tsx:170:  const [showPopup, setShowPopup] = useState(false);
+components/UI.tsx:172:  useEffect(() => {
+components/features/programme-recompense/AdminActivityAudit.tsx:1:import React, { useState, useEffect, useMemo } from 'react';
+components/features/programme-recompense/AdminActivityAudit.tsx:13:  user_id: string;
+components/features/programme-recompense/AdminActivityAudit.tsx:16:  user_level: string;
+components/features/programme-recompense/AdminActivityAudit.tsx:33:  const [data, setData] = useState<ActivitySummary[]>([]);
+components/features/programme-recompense/AdminActivityAudit.tsx:34:  const [globalStats, setGlobalStats] = useState<GlobalStats>({ 
+components/features/programme-recompense/AdminActivityAudit.tsx:41:  const [loading, setLoading] = useState(true);
+components/features/programme-recompense/AdminActivityAudit.tsx:42:  const [searchTerm, setSearchTerm] = useState('');
+components/features/programme-recompense/AdminActivityAudit.tsx:43:  const [sortKey, setSortKey] = useState<SortKey>('today');
+components/features/programme-recompense/AdminActivityAudit.tsx:44:  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+components/features/programme-recompense/AdminActivityAudit.tsx:45:  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+components/features/programme-recompense/AdminActivityAudit.tsx:46:  const [userHistory, setUserHistory] = useState<any[]>([]);
+components/features/programme-recompense/AdminActivityAudit.tsx:47:  const [loadingHistory, setLoadingHistory] = useState(false);
+components/features/programme-recompense/AdminActivityAudit.tsx:57:      const [todayRes, weekRes, monthRes, usersRes] = await Promise.all([
+components/features/programme-recompense/AdminActivityAudit.tsx:61:        supabase.from('users').select('id', { count: 'exact', head: true })
+components/features/programme-recompense/AdminActivityAudit.tsx:79:        totalNetworkUsers: usersRes.count || 0
+components/features/programme-recompense/AdminActivityAudit.tsx:103:  const fetchUserHistory = async (userId: string) => {
+components/features/programme-recompense/AdminActivityAudit.tsx:104:    if (expandedUser === userId) {
+components/features/programme-recompense/AdminActivityAudit.tsx:108:    setExpandedUser(userId);
+components/features/programme-recompense/AdminActivityAudit.tsx:114:        .eq('user_id', userId)
+components/features/programme-recompense/AdminActivityAudit.tsx:126:  useEffect(() => {
+components/features/programme-recompense/AdminActivityAudit.tsx:132:  const filteredAndSortedData = useMemo(() => {
+components/features/programme-recompense/AdminActivityAudit.tsx:274:            {filteredAndSortedData.map((user, idx) => {
+components/features/programme-recompense/AdminActivityAudit.tsx:275:              const isOnline = user.last_active && (Date.now() - new Date(user.last_active).getTime()) < 300000;
+components/features/programme-recompense/AdminActivityAudit.tsx:276:              const isExpanded = expandedUser === user.user_id;
+components/features/programme-recompense/AdminActivityAudit.tsx:277:              const isTop = idx < 3 && sortKey === 'today' && user.minutes_today > 0;
+components/features/programme-recompense/AdminActivityAudit.tsx:280:                <div key={user.user_id} className={`transition-all duration-500 ${isExpanded ? 'scale-[1.01]' : 'scale-100'}`}>
+components/features/programme-recompense/AdminActivityAudit.tsx:292:                        onClick={() => fetchUserHistory(user.user_id)}
+components/features/programme-recompense/AdminActivityAudit.tsx:299:                              {user.full_name?.charAt(0)}
+components/features/programme-recompense/AdminActivityAudit.tsx:307:                              <h4 className="text-sm md:text-lg font-black uppercase text-white truncate tracking-tight">{user.full_name}</h4>
+components/features/programme-recompense/AdminActivityAudit.tsx:308:                              <EliteBadge variant={user.user_level as any}>{user.user_level === 'niveau_mz_plus' ? 'MZ+' : 'STD'}</EliteBadge>
+components/features/programme-recompense/AdminActivityAudit.tsx:310:                            <p className="text-[9px] md:text-[11px] text-neutral-500 font-mono truncate mt-0.5 md:mt-1">{user.email}</p>
+components/features/programme-recompense/AdminActivityAudit.tsx:315:                          <TimeCell label="Aujourd'hui" value={user.minutes_today} isHighlight={user.minutes_today > 0} color="text-yellow-500" />
+components/features/programme-recompense/AdminActivityAudit.tsx:316:                          <TimeCell label="Cumulé" value={user.minutes_total} isHighlight={true} color="text-white" />
+components/features/programme-recompense/AdminActivityAudit.tsx:330:                           {user.last_active && (
+components/features/programme-recompense/AdminActivityAudit.tsx:332:                               Signal: {new Date(user.last_active).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+components/features/programme-recompense/AdminActivityAudit.tsx:352:                           ) : userHistory.length === 0 ? (
+components/features/programme-recompense/AdminActivityAudit.tsx:356:                                {userHistory.map((day, idx) => {
+components/features/programme-recompense/AdminActivityAudit.tsx:357:                                  const maxMins = Math.max(...userHistory.map(h => h.total_minutes), 1);
+components/features/programme-recompense/AdminActivityAudit.tsx:390:                              <HistoryStat label="Session Moyenne" value={`${Math.round(user.minutes_total / Math.max(userHistory.length, 1))}m`} />
+components/features/programme-recompense/AdminActivityAudit.tsx:391:                              <HistoryStat label="Jours Actifs" value={`${userHistory.filter(h => h.total_minutes > 0).length}`} />
+components/features/programme-recompense/AdminActivityAudit.tsx:392:                              <HistoryStat label="Max Daily" value={`${Math.max(...userHistory.map(h => h.total_minutes), 0)}m`} />
+components/features/programme-recompense/RewardFeature.tsx:2:import React, { useState, useEffect } from 'react';
+components/features/programme-recompense/RewardFeature.tsx:36:  user_id: string;
+components/features/programme-recompense/RewardFeature.tsx:38:  user_level: string;
+components/features/programme-recompense/RewardFeature.tsx:48:  const [leaderboard, setLeaderboard] = useState<RewardStats[]>([]);
+components/features/programme-recompense/RewardFeature.tsx:49:  const [myRank, setMyRank] = useState<RewardStats | null>(null);
+components/features/programme-recompense/RewardFeature.tsx:50:  const [loading, setLoading] = useState(true);
+components/features/programme-recompense/RewardFeature.tsx:64:        const me = ranked.find(r => r.user_id === profile?.id);
+components/features/programme-recompense/RewardFeature.tsx:67:            const { data: individual, error: indError } = await supabase.from('mz_rewards_leaderboard_v2').select('*').eq('user_id', profile.id).maybeSingle();
+components/features/programme-recompense/RewardFeature.tsx:83:  useEffect(() => {
+components/features/programme-recompense/RewardFeature.tsx:87:  const isEligibleLevel = profile?.user_level === 'niveau_mz_plus';
+components/features/programme-recompense/RewardFeature.tsx:200:                const isMe = u.user_id === profile?.id;
+components/features/programme-recompense/RewardFeature.tsx:201:                const isMzPlus = u.user_level === 'niveau_mz_plus';
+components/features/programme-recompense/RewardFeature.tsx:206:                  <div key={u.user_id} className={`flex flex-col sm:flex-row items-center justify-between p-6 md:p-10 transition-all group relative overflow-hidden ${
+components/features/axis/AxisEntity.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/axis/AxisEntity.tsx:3:import { useAxis, AxisState } from './AxisProvider';
+components/features/axis/AxisEntity.tsx:104:  const { axisState, axisMessage, axisAction, axisPosition, isVisible, hideAxis } = useAxis();
+components/features/axis/AxisEntity.tsx:106:  const [smartPosition, setSmartPosition] = useState<'top-right' | 'bottom-right'>('bottom-right');
+components/features/axis/AxisEntity.tsx:108:  useEffect(() => {
+components/features/axis/AxisGuideFlow.tsx:1:import React, { useEffect, useCallback } from 'react';
+components/features/axis/AxisGuideFlow.tsx:2:import { useAxis } from './AxisProvider';
+components/features/axis/AxisGuideFlow.tsx:5:  session: { user?: { user_metadata?: { full_name?: string } } } | null;
+components/features/axis/AxisGuideFlow.tsx:6:  userProfile: { full_name?: string } | null;
+components/features/axis/AxisGuideFlow.tsx:10:export const AxisGuideFlow: React.FC<AxisGuideFlowProps> = ({ session, userProfile, isReady }) => {
+components/features/axis/AxisGuideFlow.tsx:11:  const { triggerAxisMessage } = useAxis();
+components/features/axis/AxisGuideFlow.tsx:13:  const startGuide = useCallback(() => {
+components/features/axis/AxisGuideFlow.tsx:14:    const userName = userProfile?.full_name || session?.user?.user_metadata?.full_name?.split(' ')[0] || "partenaire";
+components/features/axis/AxisGuideFlow.tsx:19:        `Salut ${userName}… moi c'est Axis. 👁️\nTu veux changer ta situation financiere … sinon tu ne serais pas ici.\nJe peux t'aider si Tu es prêt passer à l'action.?`,
+components/features/axis/AxisGuideFlow.tsx:239:  }, [session, userProfile, triggerAxisMessage]);
+components/features/axis/AxisGuideFlow.tsx:241:  useEffect(() => {
+components/features/axis/AxisTestAdmin.tsx:1:import React, { useState } from 'react';
+components/features/axis/AxisTestAdmin.tsx:3:import { useAxis, AxisState } from './AxisProvider.tsx';
+components/features/axis/AxisTestAdmin.tsx:7:  const { triggerAxisMessage, hideAxis, axisState, isVisible } = useAxis();
+components/features/axis/AxisTestAdmin.tsx:8:  const [testMessage, setTestMessage] = useState("Ceci est un test du système Axis.");
+components/features/axis/AxisTestAdmin.tsx:9:  const [duration, setDuration] = useState(5000);
+components/features/axis/AxisTestAdmin.tsx:12:    { state: 'idle', label: 'Idle (Repos)', icon: Square, desc: 'État par défaut, attente silencieuse.' },
+components/features/axis/AxisProvider.tsx:1:import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+components/features/axis/AxisProvider.tsx:28:  const [axisState, setAxisState] = useState<AxisState>('inactive');
+components/features/axis/AxisProvider.tsx:29:  const [axisMessage, setAxisMessage] = useState<string | ReactNode | null>(null);
+components/features/axis/AxisProvider.tsx:30:  const [axisAction, setAxisAction] = useState<AxisAction | null>(null);
+components/features/axis/AxisProvider.tsx:31:  const [axisPosition, setAxisPosition] = useState<AxisPosition>('bottom-right');
+components/features/axis/AxisProvider.tsx:32:  const [isVisible, setIsVisible] = useState(false);
+components/features/axis/AxisProvider.tsx:34:  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+components/features/axis/AxisProvider.tsx:36:  const triggerAxisMessage = useCallback((message: string | ReactNode, state: AxisState = 'guiding', duration = 5000, action?: AxisAction, position: AxisPosition = 'bottom-right') => {
+components/features/axis/AxisProvider.tsx:57:  const hideAxis = useCallback(() => {
+components/features/axis/AxisProvider.tsx:83:export function useAxis() {
+components/features/axis/AxisProvider.tsx:84:  const context = useContext(AxisContext);
+components/features/axis/AxisProvider.tsx:86:    throw new Error('useAxis must be used within an AxisProvider');
+components/features/referral/ReferralList.tsx:9:  user_level: string;
+components/features/referral/ReferralList.tsx:60:                        u.user_level === 'niveau_mz_plus' 
+components/features/referral/ReferralList.tsx:64:                        {u.user_level === 'niveau_mz_plus' ? <Star size={10} fill="currentColor" /> : <Shield size={10} />}
+components/features/referral/ReferralList.tsx:65:                        {u.user_level === 'niveau_mz_plus' ? 'MZ+ Premium' : 'Standard'}
+components/features/referral/ReferralDashboard.tsx:2:import React, { useState, useEffect, useCallback } from 'react';
+components/features/referral/ReferralDashboard.tsx:16:  const [team, setTeam] = useState<any[]>([]);
+components/features/referral/ReferralDashboard.tsx:17:  const [loading, setLoading] = useState(true);
+components/features/referral/ReferralDashboard.tsx:18:  const [error, setError] = useState<string | null>(null);
+components/features/referral/ReferralDashboard.tsx:20:  const fetchTeam = useCallback(async (retryCount = 0) => {
+components/features/referral/ReferralDashboard.tsx:26:        .from('users')
+components/features/referral/ReferralDashboard.tsx:27:        .select('id, full_name, user_level, created_at')
+components/features/referral/ReferralDashboard.tsx:28:        .eq('referral_code_used', profile.referral_code)
+components/features/referral/ReferralDashboard.tsx:48:  useEffect(() => {
+components/features/referral/ReferralTools.tsx:2:import React, { useState } from 'react';
+components/features/referral/ReferralTools.tsx:11:  const [copiedLink, setCopiedLink] = useState(false);
+components/features/referral/ReferralTools.tsx:30:               <p className="text-[9px] text-neutral-500 font-bold uppercase tracking-[0.3em] mt-1">Diffusez ce lien pour parrainer de nouveaux membres</p>
+components/features/withdrawals/WithdrawalForm.tsx:1:import React, { useState } from 'react';
+components/features/withdrawals/WithdrawalForm.tsx:6:import { useCurrency } from '../../../hooks/useCurrency.ts';
+components/features/withdrawals/WithdrawalForm.tsx:17:  const [amount, setAmount] = useState<number>(0);
+components/features/withdrawals/WithdrawalForm.tsx:18:  const [method, setMethod] = useState<string>('Orange Money CI');
+components/features/withdrawals/WithdrawalForm.tsx:19:  const [account, setAccount] = useState<string>('');
+components/features/withdrawals/WithdrawalForm.tsx:20:  const [isSubmitting, setIsSubmitting] = useState(false);
+components/features/withdrawals/WithdrawalForm.tsx:21:  const { convertAndFormat, fromCurrency, currency } = useCurrency();
+components/features/withdrawals/WithdrawalForm.tsx:100:        user_id: profile?.id,
+components/features/withdrawals/WithdrawalSystem.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/withdrawals/WithdrawalSystem.tsx:17:  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+components/features/withdrawals/WithdrawalSystem.tsx:18:  const [loading, setLoading] = useState(true);
+components/features/withdrawals/WithdrawalSystem.tsx:19:  const [showForm, setShowForm] = useState(false);
+components/features/withdrawals/WithdrawalSystem.tsx:29:        .eq('user_id', profile.id)
+components/features/withdrawals/WithdrawalSystem.tsx:39:  useEffect(() => {
+components/features/withdrawals/WithdrawalSystem.tsx:43:  const isPremium = profile?.user_level === 'niveau_mz_plus';
+components/features/withdrawals/WithdrawalSystem.tsx:52:      <GoldBorderCard id="user-balance-card" className="p-10 md:p-20 relative overflow-hidden text-center bg-[#0a0a0a] border-white/10 shadow-[0_40px_100px_rgba(0,0,0,1)]">
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:8:  const [users, setUsers] = useState<UserProfile[]>([]);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:9:  const [sentPopups, setSentPopups] = useState<Set<string>>(new Set());
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:10:  const [loading, setLoading] = useState(true);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:11:  const [sending, setSending] = useState<string | null>(null);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:12:  const [searchTerm, setSearchTerm] = useState('');
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:15:  const [config, setConfig] = useState<any>({
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:20:  const [isSavingConfig, setIsSavingConfig] = useState(false);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:22:  useEffect(() => {
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:69:      const { data: userData } = await supabase
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:70:        .from('users')
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:72:        .eq('user_level', 'niveau_mz_plus')
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:78:        .select('user_id');
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:80:      if (userData) setUsers(userData as any);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:82:        setSentPopups(new Set(popupData.map(p => p.user_id)));
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:91:  const sendPopup = async (userId: string) => {
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:92:    setSending(userId);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:97:          user_id: userId, 
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:100:        }], { onConflict: 'user_id' });
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:106:        next.add(userId);
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:111:      if (sentPopups.has(userId)) {
+components/features/premium-welcome/PremiumWelcomeAdmin.tsx:121:  const filteredUsers = users.filter(u => 
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:2:import React, { useState, useEffect } from 'react';
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:9:  const [isActive, setIsActive] = useState(false);
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:10:  const [youtubeId, setYoutubeId] = useState('');
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:11:  const [videoUrl, setVideoUrl] = useState('');
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:12:  const [loading, setLoading] = useState(true);
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:13:  const [isSaving, setIsSaving] = useState(false);
+components/features/mz-plus-presentation/MZPlusPresentationAdmin.tsx:15:  useEffect(() => {
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:23:  const [config, setConfig] = useState<any>(null);
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:24:  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:25:  const [isVisible, setIsVisible] = useState(false);
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:27:  useEffect(() => {
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:32:        if (data && data.is_active && profile?.user_level !== 'niveau_mz_plus') {
+components/features/mz-plus-presentation/MZPlusPresentationOverlay.tsx:43:  useEffect(() => {
+components/features/rpa/RpaDashboard.tsx:2:import React, { useState, useEffect, useCallback } from 'react';
+components/features/rpa/RpaDashboard.tsx:20:  const [link, setLink] = useState('');
+components/features/rpa/RpaDashboard.tsx:21:  const [submissions, setSubmissions] = useState<any[]>([]);
+components/features/rpa/RpaDashboard.tsx:22:  const [loading, setLoading] = useState(true);
+components/features/rpa/RpaDashboard.tsx:23:  const [isSending, setIsSending] = useState(false);
+components/features/rpa/RpaDashboard.tsx:24:  const [showPremiumModal, setShowPremiumModal] = useState(false);
+components/features/rpa/RpaDashboard.tsx:26:  const isMzPlus = profile?.user_level === 'niveau_mz_plus';
+components/features/rpa/RpaDashboard.tsx:28:  const fetchRpaData = useCallback(async (retryCount = 0) => {
+components/features/rpa/RpaDashboard.tsx:35:        .eq('user_id', profile.id)
+components/features/rpa/RpaDashboard.tsx:51:  useEffect(() => {
+components/features/rpa/RpaDashboard.tsx:71:          user_id: profile.id, 
+components/features/admin-push-notifications/PushDisplay.tsx:2:import React, { useState, useEffect, useCallback, useRef } from 'react';
+components/features/admin-push-notifications/PushDisplay.tsx:7:  const [activePush, setActivePush] = useState<any>(null);
+components/features/admin-push-notifications/PushDisplay.tsx:8:  const [isVisible, setIsVisible] = useState(false);
+components/features/admin-push-notifications/PushDisplay.tsx:9:  const [progress, setProgress] = useState(100);
+components/features/admin-push-notifications/PushDisplay.tsx:10:  const audioRef = useRef<HTMLAudioElement | null>(null);
+components/features/admin-push-notifications/PushDisplay.tsx:11:  const timerRef = useRef<number | null>(null);
+components/features/admin-push-notifications/PushDisplay.tsx:12:  const progressIntervalRef = useRef<number | null>(null);
+components/features/admin-push-notifications/PushDisplay.tsx:14:  useEffect(() => {
+components/features/admin-push-notifications/PushDisplay.tsx:30:  const closePush = useCallback(() => {
+components/features/admin-push-notifications/PushDisplay.tsx:61:  const checkNewPush = useCallback(async () => {
+components/features/admin-push-notifications/PushDisplay.tsx:75:        if (n.target_type === 'level') return n.target_value === profile.user_level;
+components/features/admin-push-notifications/PushDisplay.tsx:76:        if (n.target_type === 'user') return n.target_value === profile.id;
+components/features/admin-push-notifications/PushDisplay.tsx:85:        .match({ notification_id: myPush.id, user_id: profile.id })
+components/features/admin-push-notifications/PushDisplay.tsx:106:          user_id: profile.id
+components/features/admin-push-notifications/PushDisplay.tsx:121:  }, [profile?.id, profile?.user_level, isVisible, closePush]);
+components/features/admin-push-notifications/PushDisplay.tsx:123:  useEffect(() => {
+components/features/admin-push-notifications/PushAdmin.tsx:2:import React, { useState, useEffect } from 'react';
+components/features/admin-push-notifications/PushAdmin.tsx:9:  const [loading, setLoading] = useState(false);
+components/features/admin-push-notifications/PushAdmin.tsx:10:  const [isSending, setIsSending] = useState(false);
+components/features/admin-push-notifications/PushAdmin.tsx:11:  const [history, setHistory] = useState<any[]>([]);
+components/features/admin-push-notifications/PushAdmin.tsx:12:  const [fcmUsersCount, setFcmUsersCount] = useState(0);
+components/features/admin-push-notifications/PushAdmin.tsx:14:  const [userSearchTerm, setUserSearchTerm] = useState('');
+components/features/admin-push-notifications/PushAdmin.tsx:15:  const [userResults, setUserResults] = useState<any[]>([]);
+components/features/admin-push-notifications/PushAdmin.tsx:16:  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+components/features/admin-push-notifications/PushAdmin.tsx:17:  const [selectedUser, setSelectedUser] = useState<any>(null);
+components/features/admin-push-notifications/PushAdmin.tsx:19:  const [formData, setFormData] = useState({
+components/features/admin-push-notifications/PushAdmin.tsx:37:      .from('users')
+components/features/admin-push-notifications/PushAdmin.tsx:43:  useEffect(() => {
+components/features/admin-push-notifications/PushAdmin.tsx:48:  useEffect(() => {
+components/features/admin-push-notifications/PushAdmin.tsx:50:      if (userSearchTerm.length < 2) {
+components/features/admin-push-notifications/PushAdmin.tsx:56:        .from('users')
+components/features/admin-push-notifications/PushAdmin.tsx:58:        .or(`full_name.ilike.%${userSearchTerm}%,email.ilike.%${userSearchTerm}%`)
+components/features/admin-push-notifications/PushAdmin.tsx:65:  }, [userSearchTerm]);
+components/features/admin-push-notifications/PushAdmin.tsx:69:    if (formData.target_type === 'user' && !selectedUser) {
+components/features/admin-push-notifications/PushAdmin.tsx:78:        target_value: formData.target_type === 'user' ? selectedUser.id : formData.target_value
+components/features/admin-push-notifications/PushAdmin.tsx:86:      if (formData.target_type === 'user' && selectedUser.id) {
+components/features/admin-push-notifications/PushAdmin.tsx:87:        const { data: userData } = await supabase.from('users').select('fcm_token').eq('id', selectedUser.id).single();
+components/features/admin-push-notifications/PushAdmin.tsx:88:        if (userData?.fcm_token) {
+components/features/admin-push-notifications/PushAdmin.tsx:94:                token: userData.fcm_token,
+components/features/admin-push-notifications/PushAdmin.tsx:105:        const { data: allUsers } = await supabase.from('users').select('fcm_token').not('fcm_token', 'is', null);
+components/features/admin-push-notifications/PushAdmin.tsx:178:                  <button type="button" onClick={() => setFormData({...formData, target_type: 'user', target_value: ''})} className={`flex items-center justify-center gap-2 p-4 sm:p-3 rounded-xl border transition-all text-[9px] font-black uppercase ${formData.target_type === 'user' ? 'bg-yellow-600 text-black border-yellow-500' : 'bg-black border-white/5 text-neutral-600'}`}><User size={14}/> Précis</button>
+components/features/admin-push-notifications/PushAdmin.tsx:188:                {formData.target_type === 'user' && (
+components/features/admin-push-notifications/PushAdmin.tsx:198:                        <input className="w-full bg-black border border-white/10 rounded-xl py-4 pl-12 text-xs text-white outline-none focus:border-yellow-600" placeholder="Nom ou Email..." value={userSearchTerm} onChange={e => setUserSearchTerm(e.target.value)} />
+components/features/admin-push-notifications/PushAdmin.tsx:199:                        {userResults.length > 0 && (
+components/features/admin-push-notifications/PushAdmin.tsx:201:                            {userResults.map(u => (
+components/features/admin-push-notifications/PushAdmin.tsx:215:              <PrimaryButton type="submit" fullWidth isLoading={isSending} size="lg">Diffuser la notification</PrimaryButton>
+components/features/admin-push-notifications/PushAdmin.tsx:282:                      } else if (session?.user?.id) {
+components/features/admin-push-notifications/PushAdmin.tsx:283:                        const { error } = await supabase.from('users').update({ fcm_token: result.token }).eq('id', session.user.id);
+components/features/formation/AcademieMain.tsx:2:import React, { useState, useEffect, useRef } from 'react';
+components/features/formation/AcademieMain.tsx:50:  const [formations, setFormations] = useState<Formation[]>([]);
+components/features/formation/AcademieMain.tsx:51:  const [loading, setLoading] = useState(true);
+components/features/formation/AcademieMain.tsx:52:  const isPremium = profile?.user_level === 'niveau_mz_plus';
+components/features/formation/AcademieMain.tsx:63:  useEffect(() => {
+components/features/formation/AcademieMain.tsx:145:  const [isPlaying, setIsPlaying] = useState(false);
+components/features/formation/AcademieMain.tsx:146:  const [showPaywall, setShowPaywall] = useState(false);
+components/features/formation/AcademieMain.tsx:147:  const videoRef = useRef<HTMLVideoElement>(null);
+components/features/formation/AcademieMain.tsx:184:      if (videoRef.current) videoRef.current.pause();
+components/features/marketing-announcements/AnnouncementAdmin.tsx:2:import React, { useState, useEffect } from 'react';
+components/features/marketing-announcements/AnnouncementAdmin.tsx:3:import { Megaphone, Plus, Trash2, Power, Save, Loader2, X, Users, Target, User, Search, CheckCircle2, MousePointer2, AlertTriangle, FileText, Eye, RefreshCw, Clock, ChevronRight } from 'lucide-react';
+components/features/marketing-announcements/AnnouncementAdmin.tsx:20:  const [announcements, setAnnouncements] = useState<any[]>([]);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:21:  const [loading, setLoading] = useState(true);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:22:  const [isSaving, setIsSaving] = useState(false);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:23:  const [showForm, setShowForm] = useState(false);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:24:  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:25:  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:27:  const [userSearchTerm, setUserSearchTerm] = useState('');
+components/features/marketing-announcements/AnnouncementAdmin.tsx:28:  const [userResults, setUserResults] = useState<any[]>([]);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:29:  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:30:  const [selectedUserDisplay, setSelectedUserDisplay] = useState<string | null>(null);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:33:  const [viewingReadersAnnId, setViewingReadersAnnId] = useState<string | null>(null);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:34:  const [readers, setReaders] = useState<any[]>([]);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:35:  const [loadingReaders, setLoadingReaders] = useState(false);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:37:  const [formData, setFormData] = useState({
+components/features/marketing-announcements/AnnouncementAdmin.tsx:75:          users!marketing_announcement_reads_user_id_fkey (
+components/features/marketing-announcements/AnnouncementAdmin.tsx:79:            user_level
+components/features/marketing-announcements/AnnouncementAdmin.tsx:94:  useEffect(() => { fetchAnnouncements(); }, []);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:96:  useEffect(() => {
+components/features/marketing-announcements/AnnouncementAdmin.tsx:98:      if (userSearchTerm.length < 2) { setUserResults([]); return; }
+components/features/marketing-announcements/AnnouncementAdmin.tsx:101:        const { data } = await supabase.from('users').select('id, full_name, email').or(`full_name.ilike.%${userSearchTerm}%,email.ilike.%${userSearchTerm}%`).limit(5);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:107:  }, [userSearchTerm]);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:109:  const selectUser = (user: any) => {
+components/features/marketing-announcements/AnnouncementAdmin.tsx:110:    setFormData({ ...formData, target_type: 'specific', target_value: user.id });
+components/features/marketing-announcements/AnnouncementAdmin.tsx:111:    setSelectedUserDisplay(`${user.full_name} (${user.email})`);
+components/features/marketing-announcements/AnnouncementAdmin.tsx:200:                     const user = r.users || (r as any).users_marketing_announcement_reads_user_id_fkey;
+components/features/marketing-announcements/AnnouncementAdmin.tsx:205:                             {user?.full_name?.charAt(0) || '?'}
+components/features/marketing-announcements/AnnouncementAdmin.tsx:209:                                <p className="text-xs font-black uppercase text-white tracking-tight">{user?.full_name || 'Membre Inconnu'}</p>
+components/features/marketing-announcements/AnnouncementAdmin.tsx:210:                                {user?.user_level && (
+components/features/marketing-announcements/AnnouncementAdmin.tsx:211:                                  <EliteBadge variant={user.user_level}>{user.user_level === 'niveau_mz_plus' ? 'MZ+' : 'STD'}</EliteBadge>
+components/features/marketing-announcements/AnnouncementAdmin.tsx:214:                              <p className="text-[8px] font-mono text-neutral-500 mt-0.5">{user?.email || 'N/A'}</p>
+components/features/marketing-announcements/AnnouncementAdmin.tsx:289:                   <label className="text-[10px] font-black uppercase text-neutral-500 tracking-[0.2em] flex items-center gap-2"><MousePointer2 size={12} className="text-yellow-600" /> Destination du clic</label>
+components/features/marketing-announcements/AnnouncementAdmin.tsx:314:                        <div className="relative"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={16} /><input className="w-full bg-black border border-white/10 rounded-xl py-4 pl-12 text-xs text-white outline-none focus:border-yellow-600" placeholder="Rechercher membre..." value={userSearchTerm} onChange={e => setUserSearchTerm(e.target.value)} /></div>
+components/features/marketing-announcements/AnnouncementAdmin.tsx:315:                        {userResults.length > 0 && <div className="absolute top-full left-0 w-full bg-[#0c0c0c] border border-white/10 rounded-xl mt-2 overflow-hidden shadow-2xl z-50">{userResults.map(u => <button key={u.id} type="button" onClick={() => selectUser(u)} className="w-full p-4 hover:bg-yellow-600/10 text-left border-b border-white/5 last:border-0"><span className="text-[10px] font-black uppercase text-white block">{u.full_name}</span><span className="text-[8px] font-mono text-neutral-500">{u.email}</span></button>)}</div>}
+components/features/marketing-announcements/AnnouncementOverlay.tsx:2:import React, { useState, useEffect, useCallback } from 'react';
+components/features/marketing-announcements/AnnouncementOverlay.tsx:12:  const [announcement, setAnnouncement] = useState<any>(null);
+components/features/marketing-announcements/AnnouncementOverlay.tsx:13:  const [isVisible, setIsVisible] = useState(false);
+components/features/marketing-announcements/AnnouncementOverlay.tsx:15:  const checkAnnouncements = useCallback(async () => {
+components/features/marketing-announcements/AnnouncementOverlay.tsx:31:        .eq('user_id', profile.id);
+components/features/marketing-announcements/AnnouncementOverlay.tsx:38:        if (ann.target_type === 'level') return ann.target_value === profile.user_level;
+components/features/marketing-announcements/AnnouncementOverlay.tsx:50:  }, [profile?.id, profile?.user_level]);
+components/features/marketing-announcements/AnnouncementOverlay.tsx:52:  useEffect(() => {
+components/features/marketing-announcements/AnnouncementOverlay.tsx:62:        user_id: profile.id
+components/features/marketing-announcements/AnnouncementOverlay.tsx:63:      }], { onConflict: 'announcement_id,user_id' });
+components/features/my-store/StandalonePublicStore.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/my-store/StandalonePublicStore.tsx:12:  const [loading, setLoading] = useState(true);
+components/features/my-store/StandalonePublicStore.tsx:13:  const [ownerProfile, setOwnerProfile] = useState<any>(null);
+components/features/my-store/StandalonePublicStore.tsx:14:  const [products, setProducts] = useState<Product[]>([]);
+components/features/my-store/StandalonePublicStore.tsx:15:  const [error, setError] = useState<string | null>(null);
+components/features/my-store/StandalonePublicStore.tsx:17:  useEffect(() => {
+components/features/my-store/StandalonePublicStore.tsx:20:        // 1. Fetch the user profile by referral\_code
+components/features/my-store/StandalonePublicStore.tsx:22:          .from('users')
+components/features/my-store/StandalonePublicStore.tsx:44:        // 3. Filter only the products the user added to their store
+components/features/my-store/MyStore.tsx:1:import React, { useState, useEffect, useMemo, useRef } from 'react';
+components/features/my-store/MyStore.tsx:82:  useEffect(() => {
+components/features/my-store/MyStore.tsx:166:  const [activeSegment, setActiveSegment] = useState<'my_products' | 'import_catalog' | 'stats' | 'product_analysis'>('my_products');
+components/features/my-store/MyStore.tsx:167:  const [products, setProducts] = useState<Product[]>([]);
+components/features/my-store/MyStore.tsx:168:  const [storeProductIds, setStoreProductIds] = useState<string[]>([]);
+components/features/my-store/MyStore.tsx:169:  const [productStats, setProductStats] = useState<ProductStat[]>([]);
+components/features/my-store/MyStore.tsx:170:  const [commissions, setCommissions] = useState<Commission[]>([]);
+components/features/my-store/MyStore.tsx:171:  const [statsPeriod, setStatsPeriod] = useState<'7d' | '30d' | 'all'>('7d');
+components/features/my-store/MyStore.tsx:172:  const [statProductId, setStatProductId] = useState<string | null>(null);
+components/features/my-store/MyStore.tsx:174:  const [importingId, setImportingId] = useState<string | null>(null);
+components/features/my-store/MyStore.tsx:175:  const [removingId, setRemovingId] = useState<string | null>(null);
+components/features/my-store/MyStore.tsx:176:  const [searchQuery, setSearchQuery] = useState('');
+components/features/my-store/MyStore.tsx:177:  const [feedback, setFeedback] = useState<string | null>(null);
+components/features/my-store/MyStore.tsx:178:  const [selectedCatalogProduct, setSelectedCatalogProduct] = useState<Product | null>(null);
+components/features/my-store/MyStore.tsx:179:  const [detailViewProduct, setDetailViewProduct] = useState<Product | null>(null);
+components/features/my-store/MyStore.tsx:180:  const [shareProduct, setShareProduct] = useState<Product | null>(null);
+components/features/my-store/MyStore.tsx:181:  const [showAllProducts, setShowAllProducts] = useState(false);
+components/features/my-store/MyStore.tsx:182:  const [showPublicStore, setShowPublicStore] = useState(false);
+components/features/my-store/MyStore.tsx:183:  const [showSettings, setShowSettings] = useState(false);
+components/features/my-store/MyStore.tsx:184:  const [showManageDropdown, setShowManageDropdown] = useState(false);
+components/features/my-store/MyStore.tsx:185:  const [storePreferences, setStorePreferences] = useState<any>(profile?.store_preferences || null);
+components/features/my-store/MyStore.tsx:186:  const [customizationEnabled, setCustomizationEnabled] = useState(true);
+components/features/my-store/MyStore.tsx:187:  const [isAddProductHighlighted, setIsAddProductHighlighted] = useState(false);
+components/features/my-store/MyStore.tsx:188:  const [addingProduct, setAddingProduct] = useState<Product | null>(null);
+components/features/my-store/MyStore.tsx:189:  const [celebratedProduct, setCelebratedProduct] = useState<Product | null>(null);
+components/features/my-store/MyStore.tsx:191:  const [isAddFirstProductHighlighted, setIsAddFirstProductHighlighted] = useState(false);
+components/features/my-store/MyStore.tsx:192:  const [isAddProductToStoreHighlighted, setIsAddProductToStoreHighlighted] = useState(false);
+components/features/my-store/MyStore.tsx:193:  const [isPromoteHighlighted, setIsPromoteHighlighted] = useState(false);
+components/features/my-store/MyStore.tsx:195:  useEffect(() => {
+components/features/my-store/MyStore.tsx:237:  useEffect(() => {
+components/features/my-store/MyStore.tsx:254:  useEffect(() => {
+components/features/my-store/MyStore.tsx:261:  const totalVisits = useMemo(() => {
+components/features/my-store/MyStore.tsx:266:  const totalSales = useMemo(() => {
+components/features/my-store/MyStore.tsx:271:  const conversionRate = useMemo(() => {
+components/features/my-store/MyStore.tsx:276:  const netRevenue = useMemo(() => {
+components/features/my-store/MyStore.tsx:284:  const chartData = useMemo(() => {
+components/features/my-store/MyStore.tsx:354:  useEffect(() => {
+components/features/my-store/MyStore.tsx:359:         .on('postgres_changes', { event: '*', schema: 'public', table: 'product_stats', filter: `user_id=eq.${profile.id}` }, fetchData)
+components/features/my-store/MyStore.tsx:360:         .on('postgres_changes', { event: '*', schema: 'public', table: 'commissions', filter: `user_id=eq.${profile.id}` }, fetchData)
+components/features/my-store/MyStore.tsx:361:         .on('postgres_changes', { event: '*', schema: 'public', table: 'mz_user_store', filter: `user_id=eq.${profile.id}` }, fetchData)
+components/features/my-store/MyStore.tsx:378:            .from('mz_user_store')
+components/features/my-store/MyStore.tsx:380:            .eq('user_id', profile.id),
+components/features/my-store/MyStore.tsx:384:            .eq('user_id', profile.id),
+components/features/my-store/MyStore.tsx:388:            .eq('user_id', profile.id)
+components/features/my-store/MyStore.tsx:411:    // Check limit for standard users
+components/features/my-store/MyStore.tsx:412:    if (profile.user_level === 'standard' && storeProductIds.length >= 5) {
+components/features/my-store/MyStore.tsx:426:        await supabase.from('mz_user_store').upsert({ user_id: profile.id, product_id: productId });
+components/features/my-store/MyStore.tsx:491:        .from('mz_user_store')
+components/features/my-store/MyStore.tsx:493:        .eq('user_id', profile.id)
+components/features/my-store/MyStore.tsx:501:      // But for a "remove" action, often users prefer it stays removed locally
+components/features/my-store/MyStore.tsx:1231:        userId={profile?.id || ''}
+components/features/my-store/StoreSettingsModal.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/my-store/StoreSettingsModal.tsx:15:  userId: string;
+components/features/my-store/StoreSettingsModal.tsx:31:export function StoreSettingsModal({ isOpen, onClose, userId, initialPreferences, onSave }: StoreSettingsModalProps) {
+components/features/my-store/StoreSettingsModal.tsx:32:  const [preferences, setPreferences] = useState<StorePreferences>({
+components/features/my-store/StoreSettingsModal.tsx:37:  const [isSaving, setIsSaving] = useState(false);
+components/features/my-store/StoreSettingsModal.tsx:38:  const [saveSuccess, setSaveSuccess] = useState(false);
+components/features/my-store/StoreSettingsModal.tsx:40:  useEffect(() => {
+components/features/my-store/StoreSettingsModal.tsx:54:        .from('users')
+components/features/my-store/StoreSettingsModal.tsx:56:        .eq('id', userId);
+components/features/my-store/StoreFAQ.tsx:1:import React, { useState } from 'react';
+components/features/my-store/StoreFAQ.tsx:53:    const [page, setPage] = useState(0);
+components/features/my-store/StoreFAQ.tsx:54:    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+components/features/my-store/PublicStorefront.tsx:1:import React, { useState } from 'react';
+components/features/my-store/PublicStorefront.tsx:16:  const [searchQuery, setSearchQuery] = useState("");
+components/features/my-store/PublicStorefront.tsx:17:  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+components/features/my-store/PublicStorefront.tsx:21:  const handleCheckout = (e?: React.MouseEvent) => {
+components/features/my-store/PublicStorefront.tsx:32:  const handleBuyNow = (product: Product, e: React.MouseEvent) => {
+components/features/my-store/AdminStoreSettings.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/my-store/AdminStoreSettings.tsx:7:  const [loading, setLoading] = useState(true);
+components/features/my-store/AdminStoreSettings.tsx:8:  const [saving, setSaving] = useState(false);
+components/features/my-store/AdminStoreSettings.tsx:9:  const [enabled, setEnabled] = useState(true);
+components/features/my-store/AdminStoreSettings.tsx:10:  const [error, setError] = useState<string | null>(null);
+components/features/my-store/AdminStoreSettings.tsx:11:  const [success, setSuccess] = useState(false);
+components/features/my-store/AdminStoreSettings.tsx:13:  useEffect(() => {
+components/features/my-store/LiveCommissionsFeed.tsx:1:import React, { useState, useEffect } from 'react';
+components/features/my-store/LiveCommissionsFeed.tsx:111:  const [visibleSales, setVisibleSales] = useState<LiveSale[]>([]);
+components/features/my-store/LiveCommissionsFeed.tsx:112:  const [now, setNow] = useState(Date.now());
+components/features/my-store/LiveCommissionsFeed.tsx:113:  const [allSales, setAllSales] = useState<LiveSale[]>([]);
+components/features/my-store/LiveCommissionsFeed.tsx:115:  useEffect(() => {
+components/features/my-store/LiveCommissionsFeed.tsx:131:  useEffect(() => {
+components/features/my-store/StoreStats.tsx:1:import React, { useState, useEffect, useMemo } from 'react';
+components/features/my-store/StoreStats.tsx:15:  const [statsPeriod, setStatsPeriod] = useState<'7d'|'30d'|'all'|'custom'>('7d');
+components/features/my-store/StoreStats.tsx:16:  const [customStartDate, setCustomStartDate] = useState<string>('');
+components/features/my-store/StoreStats.tsx:17:  const [customEndDate, setCustomEndDate] = useState<string>('');
+components/features/my-store/StoreStats.tsx:18:  const [statProductId, setStatProductId] = useState<string | null>(initialProductId);
+components/features/my-store/StoreStats.tsx:19:  const [products, setProducts] = useState<Product[]>([]);
+components/features/my-store/StoreStats.tsx:20:  const [productStats, setProductStats] = useState<ProductStat[]>([]);
+components/features/my-store/StoreStats.tsx:21:  const [commissions, setCommissions] = useState<Commission[]>([]);
+components/features/my-store/StoreStats.tsx:23:  useEffect(() => {
+components/features/my-store/StoreStats.tsx:39:          .eq('user_id', profile.id),
+components/features/my-store/StoreStats.tsx:43:          .eq('user_id', profile.id)
+components/features/my-store/StoreStats.tsx:55:  useEffect(() => {
+components/features/my-store/StoreStats.tsx:60:         .on('postgres_changes', { event: '*', schema: 'public', table: 'product_stats', filter: `user_id=eq.${profile.id}` }, fetchData)
+components/features/my-store/StoreStats.tsx:61:         .on('postgres_changes', { event: '*', schema: 'public', table: 'commissions', filter: `user_id=eq.${profile.id}` }, fetchData)
+components/features/my-store/StoreStats.tsx:71:  const filteredCommissionsByDate = useMemo(() => {
+components/features/my-store/StoreStats.tsx:96:  const totalVisits = useMemo(() => {
+components/features/my-store/StoreStats.tsx:101:  const totalSales = useMemo(() => {
+components/features/my-store/StoreStats.tsx:106:  const periodVisits = useMemo(() => {
+components/features/my-store/StoreStats.tsx:119:  const conversionRate = useMemo(() => {
+components/features/my-store/StoreStats.tsx:124:  const netRevenue = useMemo(() => {
+components/features/my-store/StoreStats.tsx:132:  const chartData = useMemo(() => {
+components/features/coaching/CoachingDashboard.tsx:2:import React, { useState, useEffect, useCallback } from 'react';
+components/features/coaching/CoachingDashboard.tsx:26:  const [showIntro, setShowIntro] = useState(true);
+components/features/coaching/CoachingDashboard.tsx:27:  const [currentStep, setCurrentStep] = useState<StepId>(0);
+components/features/coaching/CoachingDashboard.tsx:28:  const [formData, setFormData] = useState({ 
+components/features/coaching/CoachingDashboard.tsx:36:  const [requestsHistory, setRequestsHistory] = useState<any[]>([]);
+components/features/coaching/CoachingDashboard.tsx:37:  const [requestsTodayCount, setRequestsTodayCount] = useState(0);
+components/features/coaching/CoachingDashboard.tsx:38:  const [loadingStatus, setLoadingStatus] = useState(true);
+components/features/coaching/CoachingDashboard.tsx:39:  const [isSending, setIsSending] = useState(false);
+components/features/coaching/CoachingDashboard.tsx:40:  const [showSuccessModal, setShowSuccessModal] = useState(false);
+components/features/coaching/CoachingDashboard.tsx:41:  const [isAnimating, setIsAnimating] = useState(false);
+components/features/coaching/CoachingDashboard.tsx:43:  const isMzPlus = profile?.user_level === 'niveau_mz_plus';
+components/features/coaching/CoachingDashboard.tsx:45:  const fetchCoachingHistory = useCallback(async () => {
+components/features/coaching/CoachingDashboard.tsx:52:        .eq('user_id', profile.id)
+components/features/coaching/CoachingDashboard.tsx:74:  useEffect(() => {
+components/features/coaching/CoachingDashboard.tsx:120:          user_id: profile.id, 
+components/features/LivePulse.tsx:2:import React, { useState, useEffect } from 'react';
+components/features/LivePulse.tsx:11:  user: string;
+components/features/LivePulse.tsx:17:  const [events, setEvents] = useState<ActivityEvent[]>([]);
+components/features/LivePulse.tsx:18:  const [currentIndex, setCurrentIndex] = useState(0);
+components/features/LivePulse.tsx:19:  const [loading, setLoading] = useState(true);
+components/features/LivePulse.tsx:21:  useEffect(() => {
+components/features/LivePulse.tsx:34:          user: data.user_name,
+components/features/LivePulse.tsx:51:  useEffect(() => {
+components/features/LivePulse.tsx:123:            <span className="text-[10px] font-black text-white uppercase tracking-wider">{event.user}</span>
+components/features/admin-behavior/UserBehaviorAdmin.tsx:1:import React, { useState, useEffect, useMemo } from 'react';
+components/features/admin-behavior/UserBehaviorAdmin.tsx:5:  Activity, MousePointer2, Info, ArrowUpRight, Flame
+components/features/admin-behavior/UserBehaviorAdmin.tsx:11:  const [trackingData, setTrackingData] = useState<any[]>([]);
+components/features/admin-behavior/UserBehaviorAdmin.tsx:12:  const [loading, setLoading] = useState(true);
+components/features/admin-behavior/UserBehaviorAdmin.tsx:13:  const [searchTerm, setSearchTerm] = useState('');
+components/features/admin-behavior/UserBehaviorAdmin.tsx:14:  const [filterPeriod, setFilterPeriod] = useState<'today' | 'yesterday' | 'week' | 'all'>('today');
+components/features/admin-behavior/UserBehaviorAdmin.tsx:16:  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+components/features/admin-behavior/UserBehaviorAdmin.tsx:25:          users:user_id(full_name, email, user_level)
+components/features/admin-behavior/UserBehaviorAdmin.tsx:40:  useEffect(() => {
+components/features/admin-behavior/UserBehaviorAdmin.tsx:46:  const filteredDataByPeriod = useMemo(() => {
+components/features/admin-behavior/UserBehaviorAdmin.tsx:74:  const stats = useMemo(() => {
+components/features/admin-behavior/UserBehaviorAdmin.tsx:76:    const uniqueVisitors = new Set(data.map(t => t.user_id)).size;
+components/features/admin-behavior/UserBehaviorAdmin.tsx:98:      const yUnique = new Set(yesterdayData.map(t => t.user_id)).size;
+components/features/admin-behavior/UserBehaviorAdmin.tsx:110:  const filteredList = useMemo(() => {
+components/features/admin-behavior/UserBehaviorAdmin.tsx:112:      item.users?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+components/features/admin-behavior/UserBehaviorAdmin.tsx:113:      item.users?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+components/features/admin-behavior/UserBehaviorAdmin.tsx:130:             <MousePointer2 className="text-emerald-500" /> Analyse <GoldText>Comportement Offre</GoldText>
+components/features/admin-behavior/UserBehaviorAdmin.tsx:247:                          {track.users?.full_name?.charAt(0) || '?'}
+components/features/admin-behavior/UserBehaviorAdmin.tsx:250:                          <p className="font-black uppercase text-white text-xs tracking-tight">{track.users?.full_name || 'Inconnu'}</p>
+components/features/admin-behavior/UserBehaviorAdmin.tsx:251:                          <p className="text-[8px] text-neutral-600 font-mono">{track.users?.email}</p>
+components/features/admin-behavior/UserBehaviorAdmin.tsx:319:                                {track.users?.full_name?.charAt(0) || '?'}
+components/features/admin-behavior/UserBehaviorAdmin.tsx:322:                                 <p className="font-black uppercase text-white tracking-tight">{track.users?.full_name || 'Inconnu'}</p>
+components/features/admin-behavior/UserBehaviorAdmin.tsx:323:                                 <p className="text-[8px] text-neutral-600 font-mono">{track.users?.email}</p>
+components/features/messagerie-privee/PrivateMessagingMain.tsx:2:import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+components/features/messagerie-privee/PrivateMessagingMain.tsx:21:  user_a: string;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:22:  user_b: string;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:27:    user_level: string;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:33:  const [chats, setChats] = useState<Chat[]>([]);
+components/features/messagerie-privee/PrivateMessagingMain.tsx:34:  const [activeChat, setActiveChat] = useState<Chat | null>(null);
+components/features/messagerie-privee/PrivateMessagingMain.tsx:35:  const [loading, setLoading] = useState(true);
+components/features/messagerie-privee/PrivateMessagingMain.tsx:36:  const [showSearch, setShowSearch] = useState(false);
+components/features/messagerie-privee/PrivateMessagingMain.tsx:37:  const [chatSearchTerm, setChatSearchTerm] = useState('');
+components/features/messagerie-privee/PrivateMessagingMain.tsx:39:  const activeChatIdRef = useRef<string | null>(null);
+components/features/messagerie-privee/PrivateMessagingMain.tsx:41:  const fetchChats = useCallback(async (isSilent = false, retryCount = 0) => {
+components/features/messagerie-privee/PrivateMessagingMain.tsx:50:          user_a_data:user_a(id, full_name, user_level),
+components/features/messagerie-privee/PrivateMessagingMain.tsx:51:          user_b_data:user_b(id, full_name, user_level)
+components/features/messagerie-privee/PrivateMessagingMain.tsx:53:        .or(`user_a.eq.${profile.id},user_b.eq.${profile.id}`)
+components/features/messagerie-privee/PrivateMessagingMain.tsx:59:        const isUserA = chat.user_a === profile.id;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:60:        const otherUser = isUserA ? chat.user_b_data : chat.user_a_data;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:95:  const handleStartConversationWithUser = async (user: any) => {
+components/features/messagerie-privee/PrivateMessagingMain.tsx:96:    if (!profile?.id || !user?.id) return;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:97:    if (user.id === profile.id) return;
+components/features/messagerie-privee/PrivateMessagingMain.tsx:99:    const sortedIds = [profile.id, user.id].sort();
+components/features/messagerie-privee/PrivateMessagingMain.tsx:104:      .eq('user_a', sortedIds[0])
+components/features/messagerie-privee/PrivateMessagingMain.tsx:105:      .eq('user_b', sortedIds[1])
+components/features/messagerie-privee/PrivateMessagingMain.tsx:109:      handleSelectChat({ ...existingChat, otherUser: user, unreadCount: 0 });
+components/features/messagerie-privee/PrivateMessagingMain.tsx:113:        user_a: sortedIds[0], 
+components/features/messagerie-privee/PrivateMessagingMain.tsx:114:        user_b: sortedIds[1], 
+components/features/messagerie-privee/PrivateMessagingMain.tsx:116:        otherUser: user, 
+components/features/messagerie-privee/PrivateMessagingMain.tsx:122:  const deleteChatDirect = async (e: React.MouseEvent, chatId: string) => {
+components/features/messagerie-privee/PrivateMessagingMain.tsx:141:  useEffect(() => {
+components/features/messagerie-privee/PrivateMessagingMain.tsx:150:  useEffect(() => {
+components/features/messagerie-privee/PrivateMessagingMain.tsx:157:  const filteredChats = useMemo(() => {
+components/features/messagerie-privee/PrivateMessagingMain.tsx:207:                        {chat.otherUser?.user_level === 'niveau_mz_plus' && <Star size={10} className="text-purple-500 fill-current" />}
+components/features/messagerie-privee/ChatWindow.tsx:2:import React, { useState, useEffect, useRef, useCallback } from 'react';
+components/features/messagerie-privee/ChatWindow.tsx:27:export const ChatWindow: React.FC<{ chat: any; currentUserId: string; onBack: () => void; onDelete: (e: React.MouseEvent) => void }> = ({ chat, currentUserId, onBack, onDelete }) => {
+components/features/messagerie-privee/ChatWindow.tsx:28:  const [messages, setMessages] = useState<Message[]>([]);
+components/features/messagerie-privee/ChatWindow.tsx:29:  const [inputText, setInputText] = useState('');
+components/features/messagerie-privee/ChatWindow.tsx:30:  const [loading, setLoading] = useState(true);
+components/features/messagerie-privee/ChatWindow.tsx:31:  const [isSending, setIsSending] = useState(false);
+components/features/messagerie-privee/ChatWindow.tsx:32:  const [showMenu, setShowMenu] = useState(false);
+components/features/messagerie-privee/ChatWindow.tsx:33:  const scrollRef = useRef<HTMLDivElement>(null);
+components/features/messagerie-privee/ChatWindow.tsx:35:  const prevChatIdRef = useRef<string>(chat.id);
+components/features/messagerie-privee/ChatWindow.tsx:36:  const isCreatingChat = useRef(false);
+components/features/messagerie-privee/ChatWindow.tsx:38:  const forceMarkAsRead = useCallback(async () => {
+components/features/messagerie-privee/ChatWindow.tsx:54:  const fetchMessages = useCallback(async () => {
+components/features/messagerie-privee/ChatWindow.tsx:91:  useEffect(() => {
+components/features/messagerie-privee/ChatWindow.tsx:125:  useEffect(() => {
+components/features/messagerie-privee/ChatWindow.tsx:156:        const sortedIds = [chat.user_a, chat.user_b].sort();
+components/features/messagerie-privee/ChatWindow.tsx:160:            user_a: sortedIds[0], 
+components/features/messagerie-privee/ChatWindow.tsx:161:            user_b: sortedIds[1], 
+components/features/messagerie-privee/UserSearchModal.tsx:2:import React, { useState, useEffect } from 'react';
+components/features/messagerie-privee/UserSearchModal.tsx:8:  user_id: string;
+components/features/messagerie-privee/UserSearchModal.tsx:10:  user_level: string;
+components/features/messagerie-privee/UserSearchModal.tsx:14:export const UserSearchModal: React.FC<{ onClose: () => void; onSelect: (user: any) => void; currentUserId?: string }> = ({ onClose, onSelect, currentUserId }) => {
+components/features/messagerie-privee/UserSearchModal.tsx:15:  const [searchTerm, setSearchTerm] = useState('');
+components/features/messagerie-privee/UserSearchModal.tsx:16:  const [results, setResults] = useState<any[]>([]);
+components/features/messagerie-privee/UserSearchModal.tsx:17:  const [mentors, setMentors] = useState<Mentor[]>([]);
+components/features/messagerie-privee/UserSearchModal.tsx:18:  const [loading, setLoading] = useState(false);
+components/features/messagerie-privee/UserSearchModal.tsx:19:  const [loadingMentors, setLoadingMentors] = useState(true);
+components/features/messagerie-privee/UserSearchModal.tsx:21:  useEffect(() => {
+components/features/messagerie-privee/UserSearchModal.tsx:27:          .select('user_id, full_name, user_level')
+components/features/messagerie-privee/UserSearchModal.tsx:43:  useEffect(() => {
+components/features/messagerie-privee/UserSearchModal.tsx:53:          .from('users')
+components/features/messagerie-privee/UserSearchModal.tsx:54:          .select('id, full_name, email, user_level')
+components/features/messagerie-privee/UserSearchModal.tsx:122:                        key={mentor.user_id}
+components/features/messagerie-privee/UserSearchModal.tsx:123:                        disabled={mentor.user_id === currentUserId}
+components/features/messagerie-privee/UserSearchModal.tsx:124:                        onClick={() => onSelect({ id: mentor.user_id, full_name: mentor.full_name, user_level: mentor.user_level })}
+components/features/messagerie-privee/UserSearchModal.tsx:125:                        className={`p-4 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-yellow-600/10 hover:border-yellow-600/30 transition-all text-left ${mentor.user_id === currentUserId ? 'opacity-30 grayscale' : ''}`}
+components/features/messagerie-privee/UserSearchModal.tsx:173:              {results.map(user => (
+components/features/messagerie-privee/UserSearchModal.tsx:175:                  key={user.id}
+components/features/messagerie-privee/UserSearchModal.tsx:176:                  onClick={() => onSelect(user)}
+components/features/messagerie-privee/UserSearchModal.tsx:181:                      {user.full_name.charAt(0)}
+components/features/messagerie-privee/UserSearchModal.tsx:185:                        {user.full_name}
+components/features/messagerie-privee/UserSearchModal.tsx:188:                        {user.email}
+components/features/messagerie-privee/UserSearchModal.tsx:193:                     {user.user_level === 'niveau_mz_plus' && (
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:2:import React, { useState, useEffect, useRef } from 'react';
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:35:  const [config, setConfig] = useState<any>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:36:  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:37:  const [isVisible, setIsVisible] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:38:  const [isDismissed, setIsDismissed] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:39:  const [proofs, setProofs] = useState<any[]>([]);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:40:  const [fullscreenImage, setFullscreenImage] = useState<{ url: string; label: string } | null>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:41:  const [scrollProgress, setScrollProgress] = useState(0); 
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:42:  const iframeRef = useRef<HTMLDivElement>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:43:  const scrollContainerRef = useRef<HTMLDivElement>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:44:  const premiumSectionRef = useRef<HTMLDivElement>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:45:  const proofsSectionRef = useRef<HTMLDivElement>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:55:  useEffect(() => {
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:59:          const { error } = await supabase.rpc('mz_track_offer_heartbeat', { p_user_id: profile.id });
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:94:  useEffect(() => {
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:111:               const { data: mins, error: rpcError } = await supabase.rpc('mz_get_user_total_minutes', { p_user_id: profile.id });
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:125:          // Fallback config if table is empty or record missing but user explicitly wants to see it
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:143:  useEffect(() => {
+components/features/mz-plus-offer/MZPlusFlashOfferOverlay.tsx:158:  useEffect(() => {
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:2:import React, { useState, useEffect, useRef } from 'react';
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:9:  const [isActive, setIsActive] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:10:  const [showTimer, setShowTimer] = useState(true);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:11:  const [pricePromo, setPricePromo] = useState('15000');
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:12:  const [priceNormal, setPriceNormal] = useState('20000'); // Défini à 20000 comme ancrage principal
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:13:  const [urgencyHours, setUrgencyHours] = useState('24');
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:14:  const [youtubeIframe, setYoutubeIframe] = useState('');
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:15:  const [videoUrl, setVideoUrl] = useState('');
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:16:  const [loading, setLoading] = useState(true);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:17:  const [isSaving, setIsSaving] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:18:  const [success, setSuccess] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:21:  const [proofs, setProofs] = useState<any[]>([]);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:22:  const [showProofForm, setShowProofForm] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:23:  const [isSavingProof, setIsSavingProof] = useState(false);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:24:  const [uploadProgress, setUploadProgress] = useState<{before: boolean, after: boolean}>({before: false, after: false});
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:26:  const [proofForm, setProofForm] = useState({
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:35:  const fileInputBeforeRef = useRef<HTMLInputElement>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:36:  const fileInputAfterRef = useRef<HTMLInputElement>(null);
+components/features/mz-plus-offer/MZPlusFlashOfferAdmin.tsx:38:  useEffect(() => {
+components/features/gamification/XPRewardModal.tsx:1:import React, { useEffect, useState } from 'react';
+components/features/gamification/XPRewardModal.tsx:6:  const [displayAmount, setDisplayAmount] = useState(0);
+components/features/gamification/XPRewardModal.tsx:8:  useEffect(() => {
+components/LandingPage.tsx:2:import React, { useState, useEffect, useMemo } from 'react';
+components/LandingPage.tsx:14:  const [view, setView] = useState<'presentation' | 'auth'>(hasPassedLanding ? 'auth' : 'presentation');
+components/LandingPage.tsx:15:  const [config, setConfig] = useState<any>(null);
+components/LandingPage.tsx:16:  const [loading, setLoading] = useState(true);
+components/LandingPage.tsx:20:  const [timer, setTimer] = useState(isTimerDonePreviously ? 0 : 50);
+components/LandingPage.tsx:21:  const [canClick, setCanClick] = useState(isTimerDonePreviously);
+components/LandingPage.tsx:23:  useEffect(() => {
+components/LandingPage.tsx:47:  useEffect(() => {
+components/LandingPage.tsx:72:  const videoPlayer = useMemo(() => {
+components/DashboardLayout.tsx:2:import React, { useState, useEffect } from 'react';
+components/DashboardLayout.tsx:51:  const [activeMembers, setActiveMembers] = useState(() => Math.floor(Math.random() * (1500 - 800) + 800));
+components/DashboardLayout.tsx:53:  useEffect(() => {
+components/DashboardLayout.tsx:141:              {profile?.user_level !== 'niveau_mz_plus' && (
+components/RewardProgram.tsx:2:import React, { useState, useEffect } from 'react';
+components/RewardProgram.tsx:9:  user_id: string;
+components/RewardProgram.tsx:11:  user_level: string;
+components/RewardProgram.tsx:17:  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+components/RewardProgram.tsx:18:  const [myRank, setMyRank] = useState<LeaderboardEntry | null>(null);
+components/RewardProgram.tsx:19:  const [loading, setLoading] = useState(true);
+components/RewardProgram.tsx:38:        const me = ranked.find(r => r.user_id === profile?.id);
+components/RewardProgram.tsx:42:          const { data: ind } = await supabase.from('mz_reward_leaderboard').select('*').eq('user_id', profile.id).single();
+components/RewardProgram.tsx:53:  useEffect(() => {
+components/RewardProgram.tsx:142:            {leaderboard.slice(3).map((user) => (
+components/RewardProgram.tsx:143:              <div key={user.user_id} className={`flex items-center justify-between p-8 hover:bg-white/[0.02] transition-colors ${user.user_id === profile?.id ? 'bg-yellow-600/5' : ''}`}>
+components/RewardProgram.tsx:145:                    <span className="font-mono text-xs font-black text-neutral-800 w-8">#{user.rank}</span>
+components/RewardProgram.tsx:147:                      {user.full_name.charAt(0)}
+components/RewardProgram.tsx:150:                       <p className="text-sm font-black uppercase text-white tracking-wide">{user.full_name}</p>
+components/RewardProgram.tsx:151:                       <p className={`text-[8px] font-black uppercase tracking-widest ${user.user_level === 'niveau_mz_plus' ? 'text-blue-400' : 'text-neutral-600'}`}>
+components/RewardProgram.tsx:152:                         {user.user_level === 'niveau_mz_plus' ? 'Niveau MZ+' : 'Standard'}
+components/RewardProgram.tsx:157:                    <p className="text-sm font-mono font-black text-white">{user.engagement_score}</p>
+components/premium-access/usePremiumAccess.ts:2:import React, { useState, useEffect } from 'react';
+components/premium-access/usePremiumAccess.ts:10:export const usePremiumAccess = () => {
+components/premium-access/usePremiumAccess.ts:11:  const [config, setConfig] = useState<PremiumAccessConfig | null>(null);
+components/premium-access/usePremiumAccess.ts:12:  const [loading, setLoading] = useState(true);
+components/premium-access/usePremiumAccess.ts:13:  const [isModalOpen, setIsModalOpen] = useState(false);
+components/premium-access/usePremiumAccess.ts:15:  useEffect(() => {
+components/premium-access/usePremiumAccess.ts:59:  const checkAccess = (e?: React.MouseEvent | MouseEvent) => {
+components/premium-access/PremiumAccessAdmin.tsx:2:import React, { useState, useEffect } from 'react';
+components/premium-access/PremiumAccessAdmin.tsx:8:  const [config, setConfig] = useState<any>(null);
+components/premium-access/PremiumAccessAdmin.tsx:9:  const [loading, setLoading] = useState(true);
+components/premium-access/PremiumAccessAdmin.tsx:10:  const [isSaving, setIsSaving] = useState(false);
+components/premium-access/PremiumAccessAdmin.tsx:12:  useEffect(() => {
+components/premium-access/PremiumAccessGate.tsx:2:import React, { useEffect } from 'react';
+components/premium-access/PremiumAccessGate.tsx:3:import { usePremiumAccess } from './usePremiumAccess.ts';
+components/premium-access/PremiumAccessGate.tsx:7:  const { config, isModalOpen, setIsModalOpen, checkAccess } = usePremiumAccess();
+components/premium-access/PremiumAccessGate.tsx:9:  useEffect(() => {
+components/premium-access/PremiumAccessGate.tsx:23:    const handleGlobalClick = (e: MouseEvent) => {
+components/guides/RPAGuide.tsx:2:import React, { useState, useEffect } from 'react';
+components/guides/RPAGuide.tsx:5:import { useGuidePosition } from './useGuidePosition.ts';
+components/guides/RPAGuide.tsx:14:  const [step, setStep] = useState(0);
+components/guides/RPAGuide.tsx:15:  const [isReady, setIsReady] = useState(false);
+components/guides/RPAGuide.tsx:29:  const targetRect = useGuidePosition(targetId);
+components/guides/RPAGuide.tsx:31:  useEffect(() => {
+components/guides/TeamGuide.tsx:2:import React, { useState, useEffect } from 'react';
+components/guides/TeamGuide.tsx:5:import { useGuidePosition } from './useGuidePosition.ts';
+components/guides/TeamGuide.tsx:13:  const [step, setStep] = useState(0);
+components/guides/TeamGuide.tsx:14:  const [isReady, setIsReady] = useState(false);
+components/guides/TeamGuide.tsx:26:  const targetRect = useGuidePosition(targetId);
+components/guides/TeamGuide.tsx:28:  useEffect(() => {
+components/guides/useGuidePosition.ts:2:import { useState, useEffect, useCallback } from 'react';
+components/guides/useGuidePosition.ts:4:export const useGuidePosition = (targetId: string | null) => {
+components/guides/useGuidePosition.ts:5:  const [rect, setRect] = useState<DOMRect | null>(null);
+components/guides/useGuidePosition.ts:7:  const updateRect = useCallback(() => {
+components/guides/useGuidePosition.ts:29:  useEffect(() => {
+components/guides/useGuidePosition.ts:32:    // If element not found, poll for it briefly (useful for dynamic content)
+components/guides/AffiliationGuide.tsx:2:import React, { useState, useEffect } from 'react';
+components/guides/AffiliationGuide.tsx:5:import { useGuidePosition } from './useGuidePosition.ts';
+components/guides/AffiliationGuide.tsx:15:  const [step, setStep] = useState(() => {
+components/guides/AffiliationGuide.tsx:19:  const [isReady, setIsReady] = useState(false);
+components/guides/AffiliationGuide.tsx:22:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:31:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:52:  const targetRect = useGuidePosition(targetId);
+components/guides/AffiliationGuide.tsx:55:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:63:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:75:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:91:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:106:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:162:  useEffect(() => {
+components/guides/AffiliationGuide.tsx:165:    const handleGlobalClick = (e: MouseEvent) => {
+components/guides/AffiliationGuide.tsx:171:          // The tab change will trigger the step advance via the other useEffect
+components/guides/AffiliationGuide.tsx:198:    "Lien copié avec succès ! 🎉\n\nTu es maintenant prêt à diffuser ton offre et à toucher tes commissions.",
+components/ProductSalesPage.tsx:2:import React, { useState } from 'react';
+components/ProductSalesPage.tsx:40:  const [isExpanded, setIsExpanded] = useState(false);
+components/ProductSalesPage.tsx:42:  useEffect(() => {
+components/ui/PWAInstallBanner.tsx:1:import React, { useState, useEffect } from 'react';
+components/ui/PWAInstallBanner.tsx:6:  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+components/ui/PWAInstallBanner.tsx:7:  const [isVisible, setIsVisible] = useState(false);
+components/ui/PWAInstallBanner.tsx:8:  const [isInstalled, setIsInstalled] = useState(false);
+components/ui/PWAInstallBanner.tsx:9:  const [isIOS, setIsIOS] = useState(false);
+components/ui/PWAInstallBanner.tsx:11:  useEffect(() => {
+components/ui/PWAInstallBanner.tsx:13:    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+components/ui/PWAInstallBanner.tsx:85:      const { outcome } = await deferredPrompt.userChoice;
+components/ui/CurrencyDisplay.tsx:1:import React, { useState, useEffect } from 'react';
+components/ui/CurrencyDisplay.tsx:2:import { useCurrency } from '../../hooks/useCurrency.ts';
+components/ui/CurrencyDisplay.tsx:29:  const { convertAndFormat } = useCurrency();
+components/ui/CurrencyDisplay.tsx:59:  const { currency, updateCurrency } = useCurrency();
+components/ui/CurrencyDisplay.tsx:60:  const [isOpen, setIsOpen] = useState(false);
+components/AffiliationSystem.tsx:1:import React, { useState, useEffect, useCallback, useRef } from 'react';
+components/AffiliationSystem.tsx:31:  MousePointer2 as Cursor,
+components/AffiliationSystem.tsx:81:  const [products, setProducts] = useState<Product[]>([]);
+components/AffiliationSystem.tsx:82:  const [commissions, setCommissions] = useState<Commission[]>([]);
+components/AffiliationSystem.tsx:83:  const [productStats, setProductStats] = useState<ProductStat[]>([]);
+components/AffiliationSystem.tsx:84:  const [loading, setLoading] = useState(true);
+components/AffiliationSystem.tsx:85:  const [error, setError] = useState<string | null>(null);
+components/AffiliationSystem.tsx:86:  const [processingId, setProcessingId] = useState<string | null>(null);
+components/AffiliationSystem.tsx:87:  const [isCatalogVisible, setIsCatalogVisible] = useState(onlyCatalog);
+components/AffiliationSystem.tsx:88:  const [activeCatalogFilter, setActiveCatalogFilter] = useState<'all' | 'popular' | 'sellers' | 'recommended'>('all');
+components/AffiliationSystem.tsx:89:  const [selectedProductForDetail, setSelectedProductForDetail] = useState<Product | null>(null);
+components/AffiliationSystem.tsx:90:  const [searchQuery, setSearchQuery] = useState('');
+components/AffiliationSystem.tsx:91:  const productsRef = useRef<HTMLElement>(null);
+components/AffiliationSystem.tsx:93:  useEffect(() => {
+components/AffiliationSystem.tsx:110:  const [showProductForm, setShowProductForm] = useState(false);
+components/AffiliationSystem.tsx:111:  const [editingProduct, setEditingProduct] = useState<any>(null);
+components/AffiliationSystem.tsx:112:  const [isSavingProduct, setIsSavingProduct] = useState(false);
+components/AffiliationSystem.tsx:113:  const [productFormData, setProductFormData] = useState({
+components/AffiliationSystem.tsx:122:  const fetchData = useCallback(async (retryCount = 0) => {
+components/AffiliationSystem.tsx:136:          .select(`*, products(*), users:user_id(full_name, email)`)
+components/AffiliationSystem.tsx:142:          supabase.from('commissions').select('*, products(*)').eq('user_id', profile.id).order('created_at', { ascending: false }),
+components/AffiliationSystem.tsx:143:          supabase.from('product_stats').select('product_id, clicks').eq('user_id', profile.id)
+components/AffiliationSystem.tsx:167:  useEffect(() => {
+components/AffiliationSystem.tsx:275:                      <div className="font-black uppercase text-sm">{(c as any).users?.full_name || 'Inconnu'}</div>
+components/AffiliationSystem.tsx:315:                        <td className="p-6"><div className="font-black uppercase">{(c as any).users?.full_name || 'Inconnu'}</div></td>
+components/AffiliationSystem.tsx:359:                          <div className="font-bold uppercase text-neutral-400">{(c as any).users?.full_name || 'Inconnu'}</div>
+components/AffiliationSystem.tsx:835:  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+components/LunaChatPage.tsx:1:import React, { useState, useRef, useEffect } from 'react';
+components/LunaChatPage.tsx:7:  role: 'user' | 'model' | 'system';
+components/LunaChatPage.tsx:12:  const isMzPlus = profile?.user_level === 'niveau_mz_plus';
+components/LunaChatPage.tsx:14:  const inputRef = useRef<HTMLTextAreaElement>(null);
+components/LunaChatPage.tsx:15:  const messagesEndRef = useRef<HTMLDivElement>(null);
+components/LunaChatPage.tsx:18:  const [isLunaTyping, setIsLunaTyping] = useState(true);
+components/LunaChatPage.tsx:19:  const [showWelcome, setShowWelcome] = useState(false);
+components/LunaChatPage.tsx:20:  const [showSuggestions, setShowSuggestions] = useState(false);
+components/LunaChatPage.tsx:24:  const [messages, setMessages] = useState<Message[]>([]);
+components/LunaChatPage.tsx:25:  const [input, setInput] = useState('');
+components/LunaChatPage.tsx:26:  const [loading, setLoading] = useState(false);
+components/LunaChatPage.tsx:35:  useEffect(() => {
+components/LunaChatPage.tsx:56:  useEffect(() => {
+components/LunaChatPage.tsx:69:    const userMessage = input.trim();
+components/LunaChatPage.tsx:73:    setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+components/LunaChatPage.tsx:119:            <EliteBadge variant={profile?.user_level}>{isMzPlus ? 'Accès Illimité' : 'Accès Limité'}</EliteBadge>
+components/LunaChatPage.tsx:143:            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
+components/LunaChatPage.tsx:144:              <div className={`flex gap-2.5 max-w-[95%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+components/LunaChatPage.tsx:145:                {msg.role !== 'user' && (
+components/LunaChatPage.tsx:150:                  msg.role === 'user' 
+components/SQLConsole.tsx:2:import React, { useState, useEffect, useRef } from 'react';
+components/SQLConsole.tsx:17:  const [db, setDb] = useState<Database | null>(null);
+components/SQLConsole.tsx:18:  const [query, setQuery] = useState<string>('SELECT * FROM users;');
+components/SQLConsole.tsx:19:  const [results, setResults] = useState<any[]>([]);
+components/SQLConsole.tsx:20:  const [error, setError] = useState<string | null>(null);
+components/SQLConsole.tsx:21:  const [loading, setLoading] = useState(true);
+components/SQLConsole.tsx:22:  const [activeTab, setActiveTab] = useState<'local' | 'supabase'>('local');
+components/SQLConsole.tsx:23:  const [sqlFiles, setSqlFiles] = useState<{name: string, content: string}[]>([]);
+components/SQLConsole.tsx:25:  useEffect(() => {
+components/SQLConsole.tsx:35:          CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, email TEXT, rank TEXT);
+components/SQLConsole.tsx:36:          INSERT INTO users VALUES (1, 'Jean Dupont', 'jean@example.com', 'Ambassadeur');
+components/SQLConsole.tsx:37:          INSERT INTO users VALUES (2, 'Marie Curie', 'marie@example.com', 'Elite');
+components/SQLConsole.tsx:38:          INSERT INTO users VALUES (3, 'Admin MZ+', 'admin@mz.plus', 'Super Admin');
+components/SQLConsole.tsx:202:                  <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Table: users</p>
+components/PremiumPopup.tsx:1:import React, { useState, useEffect } from 'react';
+components/PremiumPopup.tsx:8:  user: UserProfile | null;
+components/PremiumPopup.tsx:11:export const PremiumPopup: React.FC<PremiumPopupProps> = ({ user }) => {
+components/PremiumPopup.tsx:12:  const [popup, setPopup] = useState<PremiumWelcomePopup | null>(null);
+components/PremiumPopup.tsx:13:  const [config, setConfig] = useState<any>(null);
+components/PremiumPopup.tsx:14:  const [isVisible, setIsVisible] = useState(false);
+components/PremiumPopup.tsx:16:  useEffect(() => {
+components/PremiumPopup.tsx:17:    if (user) {
+components/PremiumPopup.tsx:20:  }, [user]);
+components/PremiumPopup.tsx:23:    if (!user) return;
+components/PremiumPopup.tsx:38:      .eq('user_id', user.id)
+components/PremiumPopup.tsx:65:  if (!popup || !user) return null;
+components/PremiumPopup.tsx:67:  const firstName = user.full_name.split(' ')[0];
+components/EspacePrive.tsx:1:import React, { useState, useEffect, useRef, useCallback } from 'react';
+components/EspacePrive.tsx:61:    user_level: string;
+components/EspacePrive.tsx:90:    user_level: string;
+components/EspacePrive.tsx:103:const AmbassadorContactModal = ({ user, onClose, onContact }: { user: any; onClose: () => void; onContact: (u: any) => void }) => {
+components/EspacePrive.tsx:104:  if (!user) return null;
+components/EspacePrive.tsx:115:                  <div className="w-24 h-24 rounded-[2rem] bg-neutral-900 border-4 border-[#080808] flex items-center justify-center text-3xl font-black text-white shadow-2xl uppercase">{user.full_name.charAt(0)}</div>
+components/EspacePrive.tsx:119:                  <h3 className="text-lg font-black uppercase text-white tracking-tighter">{user.full_name}</h3>
+components/EspacePrive.tsx:120:                  <EliteBadge variant={user.user_level}>{user.user_level === 'niveau_mz_plus' ? 'Premium' : 'Standard'}</EliteBadge>
+components/EspacePrive.tsx:123:                  <button onClick={() => onContact(user)} className="w-full py-4 bg-yellow-600 text-black rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-yellow-500 active:scale-95 transition-all"><Mail size={16} /> Envoyer un message privé</button>
+components/EspacePrive.tsx:133:export const EspacePrive: React.FC<{ profile: UserProfile | null; onContactAmbassador?: (user: any) => void }> = ({ profile, onContactAmbassador }) => {
+components/EspacePrive.tsx:134:  const [activeInternalTab, setActiveInternalTab] = useState<'salon' | 'conseils'>('salon');
+components/EspacePrive.tsx:135:  const [messages, setMessages] = useState<GroupMessage[]>([]);
+components/EspacePrive.tsx:136:  const [tips, setTips] = useState<EliteTip[]>([]);
+components/EspacePrive.tsx:137:  const [inputText, setInputText] = useState('');
+components/EspacePrive.tsx:138:  const [tipInput, setTipInput] = useState('');
+components/EspacePrive.tsx:140:  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+components/EspacePrive.tsx:141:  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+components/EspacePrive.tsx:142:  const [uploadType, setUploadType] = useState<'image' | 'video' | 'doc' | null>(null);
+components/EspacePrive.tsx:143:  const [isUploading, setIsUploading] = useState(false);
+components/EspacePrive.tsx:145:  const [loading, setLoading] = useState(true);
+components/EspacePrive.tsx:146:  const [isSending, setIsSending] = useState(false);
+components/EspacePrive.tsx:147:  const [replyTo, setReplyTo] = useState<GroupMessage | null>(null);
+components/EspacePrive.tsx:148:  const [isChatLocked, setIsChatLocked] = useState(false);
+components/EspacePrive.tsx:149:  const [selectedAmbassador, setSelectedAmbassador] = useState<any>(null);
+components/EspacePrive.tsx:150:  const [swipeOffset, setSwipeOffset] = useState(0);
+components/EspacePrive.tsx:151:  const [swipingId, setSwipingId] = useState<string | null>(null);
+components/EspacePrive.tsx:152:  const [showScrollBottom, setShowScrollBottom] = useState(false);
+components/EspacePrive.tsx:154:  const touchStartX = useRef(0);
+components/EspacePrive.tsx:155:  const scrollRef = useRef<HTMLDivElement>(null);
+components/EspacePrive.tsx:156:  const fileInputRef = useRef<HTMLInputElement>(null);
+components/EspacePrive.tsx:160:  const fetchMessages = useCallback(async () => {
+components/EspacePrive.tsx:162:      const { data, error } = await supabase.from('group_messages').select('*, sender:users(id, full_name, user_level, is_admin, email)').order('created_at', { ascending: true }).limit(100);
+components/EspacePrive.tsx:168:            if (original) return { ...m, reply_to_msg: { content: original.content, sender_name: original.sender?.full_name || "Ambassadeur", sender_level: original.sender?.user_level }};
+components/EspacePrive.tsx:177:  const fetchTips = useCallback(async () => {
+components/EspacePrive.tsx:181:        .select('*, sender:users(full_name, is_admin, user_level)')
+components/EspacePrive.tsx:188:  useEffect(() => {
+components/EspacePrive.tsx:195:          const { data: userData } = await supabase.from('users').select('id, full_name, user_level, is_admin, email').eq('id', payload.new.sender_id).single();
+components/EspacePrive.tsx:199:            const { data: origUser } = await supabase.from('users').select('full_name, user_level').eq('id', orig?.sender_id).single();
+components/EspacePrive.tsx:200:            if (orig) replyData = { content: orig.content, sender_name: origUser?.full_name || "Ambassadeur", sender_level: origUser?.user_level };
+components/EspacePrive.tsx:202:          setMessages(prev => [...prev, { ...payload.new as any, sender: userData, reply_to_msg: replyData }]);
+components/EspacePrive.tsx:423:  useEffect(() => {
+components/EspacePrive.tsx:432:      {selectedAmbassador && <AmbassadorContactModal user={selectedAmbassador} onClose={() => setSelectedAmbassador(null)} onContact={(u) => { setSelectedAmbassador(null); if (onContactAmbassador) onContactAmbassador(u); }} />}
+components/EspacePrive.tsx:486:                  const isSenderMzPlus = msg.sender?.user_level === 'niveau_mz_plus';
+components/EspacePrive.tsx:647:                                     <p className={`text-[10px] md:text-xs font-black uppercase truncate tracking-tighter ${getNameColor(tip.sender?.full_name || "", isTipAdmin, tip.sender?.user_level === 'niveau_mz_plus')}`}>{tip.sender?.full_name}</p>
+components/EspacePrive.tsx:772:  const [clicked, setClicked] = useState(false);
+components/AuthForm.tsx:2:import React, { useState, useEffect } from 'react';
+components/AuthForm.tsx:6:import { useCurrency } from '../hooks/useCurrency.ts';
+components/AuthForm.tsx:81:  const [isLogin, setIsLogin] = useState(defaultMode === 'login');
+components/AuthForm.tsx:82:  const [email, setEmail] = useState('');
+components/AuthForm.tsx:83:  const [password, setPassword] = useState('');
+components/AuthForm.tsx:84:  const [name, setName] = useState('');
+components/AuthForm.tsx:85:  const [country, setCountry] = useState('');
+components/AuthForm.tsx:86:  const [referralCode, setReferralCode] = useState('');
+components/AuthForm.tsx:87:  const [error, setError] = useState('');
+components/AuthForm.tsx:88:  const [message, setMessage] = useState('');
+components/AuthForm.tsx:89:  const [loading, setLoading] = useState(false);
+components/AuthForm.tsx:90:  const [isUserRegistered, setIsUserRegistered] = useState(false);
+components/AuthForm.tsx:91:  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+components/AuthForm.tsx:93:  const { updateCurrency } = useCurrency();
+components/AuthForm.tsx:95:  useEffect(() => {
+components/AuthForm.tsx:120:    // Normalisation rigoureuse
+components/AuthForm.tsx:174:              referral_code_used: referralCode.trim() || null,
+components/AdminPanel.tsx:2:import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+components/AdminPanel.tsx:8:  Home, Monitor, Globe, Code, Info, Upload, FileVideo, UserPlus, Clock, Eye, Activity, MousePointer2,
+components/AdminPanel.tsx:29:type AdminTab = 'stats' | 'users' | 'formations' | 'validation' | 'withdrawals' | 'rpa_validations' | 'coaching' | 'catalog' | 'admin_push' | 'marketing_announcements' | 'flash_offer' | 'activity_audit' | 'home_landing' | 'user_behavior' | 'premium_welcome' | 'mz_presentation' | 'premium_access' | 'pwa_branding' | 'store_settings' | 'axis_test';
+components/AdminPanel.tsx:40:  const [activeSubTab, setActiveSubTab] = useState<AdminTab>('stats');
+components/AdminPanel.tsx:41:  const [users, setUsers] = useState<any[]>([]);
+components/AdminPanel.tsx:42:  const [commissions, setCommissions] = useState<any[]>([]);
+components/AdminPanel.tsx:43:  const [activitySummary, setActivitySummary] = useState<any[]>([]);
+components/AdminPanel.tsx:44:  const [submissions, setSubmissions] = useState<RPASubmission[]>([]);
+components/AdminPanel.tsx:45:  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+components/AdminPanel.tsx:46:  const [coachingRequests, setCoachingRequests] = useState<CoachingRequest[]>([]);
+components/AdminPanel.tsx:47:  const [stats, setStats] = useState({ totalUsers: 0, totalSales: 0, totalVolume: 0, pendingSales: 0, pendingRpa: 0, pendingWithdrawals: 0, pendingCoaching: 0 });
+components/AdminPanel.tsx:48:  const [loading, setLoading] = useState(true);
+components/AdminPanel.tsx:49:  const [error, setError] = useState<string | null>(null);
+components/AdminPanel.tsx:50:  const [searchTerm, setSearchTerm] = useState('');
+components/AdminPanel.tsx:52:  const fetchAdminData = useCallback(async (retryCount = 0) => {
+components/AdminPanel.tsx:57:        supabase.from('users').select('*, wallets(balance)').order('created_at', { ascending: false }),
+components/AdminPanel.tsx:58:        supabase.from('commissions').select('*, products(name), users:user_id(full_name)').order('created_at', { ascending: false }),
+components/AdminPanel.tsx:59:        supabase.from('withdrawals').select('*, users(full_name, email)').order('created_at', { ascending: false }),
+components/AdminPanel.tsx:60:        supabase.from('rpa_submissions').select('*, users(full_name, email, rpa_points, rpa_balance)').order('created_at', { ascending: false }),
+components/AdminPanel.tsx:61:        supabase.from('coaching_requests').select('*, users(full_name, email, user_level)').order('created_at', { ascending: false }),
+components/AdminPanel.tsx:102:  useEffect(() => { fetchAdminData(); }, [fetchAdminData, lastUpdateSignal]);
+components/AdminPanel.tsx:122:          <TabButton hidden={!isAnyAdmin} active={activeSubTab === 'user_behavior'} onClick={() => setActiveSubTab('user_behavior')} icon={MousePointer2} label="Comportement" color="text-emerald-400" />
+components/AdminPanel.tsx:124:          <TabButton hidden={!isAnyAdmin} active={activeSubTab === 'users'} onClick={() => setActiveSubTab('users')} icon={Users} label="Membres" />
+components/AdminPanel.tsx:180:                                <p className="text-[11px] font-black uppercase text-white tracking-tight">{c.users?.full_name || 'Inconnu'}</p>
+components/AdminPanel.tsx:212:        {activeSubTab === 'user_behavior' && <UserBehaviorAdmin />}
+components/AdminPanel.tsx:214:        {activeSubTab === 'users' && isAnyAdmin && <AdminUserManagement users={users} activitySummary={activitySummary} searchTerm={searchTerm} setSearchTerm={setSearchTerm} onRefresh={fetchAdminData} />}
+components/AdminPanel.tsx:266:  const [config, setConfig] = useState<any>(null);
+components/AdminPanel.tsx:267:  const [loading, setLoading] = useState(true);
+components/AdminPanel.tsx:268:  const [isSaving, setIsSaving] = useState(false);
+components/AdminPanel.tsx:270:  useEffect(() => {
+components/AdminPanel.tsx:309:  const [config, setConfig] = useState<{ icon_base64: string; app_name: string }>({ 
+components/AdminPanel.tsx:313:  const [loading, setLoading] = useState(true);
+components/AdminPanel.tsx:314:  const [isSaving, setIsSaving] = useState(false);
+components/AdminPanel.tsx:316:  useEffect(() => {
+components/AdminPanel.tsx:458:const AdminUserManagement = ({ users, activitySummary, searchTerm, setSearchTerm, onRefresh }: any) => {
+components/AdminPanel.tsx:459:  const filteredUsers = users.filter((u: any) => 
+components/AdminPanel.tsx:465:    await supabase.from('users').update(updates).eq('id', id);
+components/AdminPanel.tsx:485:              <EliteBadge variant={u.user_level}>{u.user_level === 'niveau_mz_plus' ? 'MZ+' : 'Standard'}</EliteBadge>
+components/AdminPanel.tsx:490:                <button onClick={() => updateUser(u.id, { user_level: u.user_level === 'standard' ? 'niveau_mz_plus' : 'standard' })} className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-neutral-400" title="Basculer Niveau"><RefreshCw size={14}/></button>
+components/AdminPanel.tsx:511:                <td className="p-6"><EliteBadge variant={u.user_level}>{u.user_level === 'niveau_mz_plus' ? 'MZ+' : 'Standard'}</EliteBadge></td>
+components/AdminPanel.tsx:517:                    <button onClick={() => updateUser(u.id, { user_level: u.user_level === 'standard' ? 'niveau_mz_plus' : 'standard' })} className="p-2 bg-white/5 rounded-lg border border-white/10 hover:bg-yellow-600 hover:text-black transition-all" title="Basculer Niveau"><RefreshCw size={14}/></button>
+components/AdminPanel.tsx:531:  const [formations, setFormations] = useState<Formation[]>([]);
+components/AdminPanel.tsx:532:  const [showForm, setShowForm] = useState(false);
+components/AdminPanel.tsx:533:  const [formData, setFormData] = useState<any>({ title: '', description: '', thumbnail_url: '', preview_url: '', order_index: 0 });
+components/AdminPanel.tsx:540:  useEffect(() => { fetchFormations(); }, []);
+components/AdminPanel.tsx:603:                  <div className="font-bold text-sm">{w.users?.full_name}</div>
+components/AdminPanel.tsx:604:                  <div className="text-[10px] opacity-50 font-mono">{w.users?.email}</div>
+components/AdminPanel.tsx:639:                  <td className="p-6"><div>{w.users?.full_name}</div><div className="opacity-50 text-[10px]">{w.users?.email}</div></td>
+components/AdminPanel.tsx:665:  const [pointsInputs, setPointsInputs] = useState<Record<string, number>>({});
+components/AdminPanel.tsx:666:  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+components/AdminPanel.tsx:686:        const currentPoints = Number(submission.users?.rpa_points || 0);
+components/AdminPanel.tsx:687:        const currentBalance = Number(submission.users?.rpa_balance || 0);
+components/AdminPanel.tsx:689:        const { error: userError } = await supabase
+components/AdminPanel.tsx:690:          .from('users')
+components/AdminPanel.tsx:695:          .eq('id', submission.user_id);
+components/AdminPanel.tsx:697:        if (userError) throw userError;
+components/AdminPanel.tsx:724:                  <div className="font-bold text-sm">{s.users?.full_name}</div>
+components/AdminPanel.tsx:725:                  <div className="text-[10px] opacity-50 font-mono truncate max-w-[150px]">{s.users?.email}</div>
+components/AdminPanel.tsx:787:                  <td className="p-6"><div>{s.users?.full_name}</div><div className="opacity-50 text-[10px]">{s.users?.email}</div></td>
+components/AdminPanel.tsx:820:                          title="Refuser"
+components/AdminPanel.tsx:856:                  <div className="font-bold text-sm">{c.users?.full_name}</div>
+components/AdminPanel.tsx:857:                  <EliteBadge variant={c.users?.user_level}>{c.users?.user_level === 'niveau_mz_plus' ? 'MZ+' : 'STD'}</EliteBadge>
+components/AdminPanel.tsx:885:                    <div className="font-bold">{c.users?.full_name}</div>
+components/AdminPanel.tsx:886:                    <EliteBadge variant={c.users?.user_level}>{c.users?.user_level}</EliteBadge>
+components/ProductDetailView.tsx:1:import React, { useState } from 'react';
+components/ProductDetailView.tsx:7:import { useAxis } from './features/axis/AxisProvider.tsx';
+components/ProductDetailView.tsx:10:  const [copied, setCopied] = useState(false);
+components/ProductDetailView.tsx:189:  // Dynamic strategic messages from user request
+components/ProductDetailView.tsx:224:  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+components/ProductDetailView.tsx:226:  const { triggerAxisMessage } = useAxis();
+components/ProductDetailView.tsx:229:  const [trend, setTrend] = useState(initialTrend);
+components/ProductDetailView.tsx:230:  const [livePulse, setLivePulse] = useState(false);
+components/ProductDetailView.tsx:231:  const [liveSalesPulse, setLiveSalesPulse] = useState(false);
+components/ProductDetailView.tsx:234:  useEffect(() => {
+components/DashboardTabs.tsx:2:import React, { useState, useEffect } from 'react';
+components/DashboardTabs.tsx:46:import { useCurrency } from '../hooks/useCurrency.ts';
+components/DashboardTabs.tsx:47:import { useAxis } from './features/axis/AxisProvider.tsx';
+components/DashboardTabs.tsx:59:  const [showBalance, setShowBalance] = useState(true);
+components/DashboardTabs.tsx:60:  const [showWithdrawForm, setShowWithdrawForm] = useState(false);
+components/DashboardTabs.tsx:61:  const [isShopHighlighted, setIsShopHighlighted] = useState(false);
+components/DashboardTabs.tsx:62:  const { convertAndFormat } = useCurrency();
+components/DashboardTabs.tsx:63:  const { triggerAxisMessage } = useAxis();
+components/DashboardTabs.tsx:64:  const isMzPlus = profile?.user_level === 'niveau_mz_plus';
+components/DashboardTabs.tsx:66:  useEffect(() => {
+components/DashboardTabs.tsx:591:    "Museveni", "Kagame", "Kenyatta", "Ruto", "Odinga", "Magufuli", "Samia", "Nkurunziza", "Ndayishimiye", "Buyoya",
+components/DashboardTabs.tsx:688:  const [visibleFeed, setVisibleFeed] = useState<LiveWithdrawalEvent[]>([]);
+components/DashboardTabs.tsx:689:  const [allEvents, setAllEvents] = useState<LiveWithdrawalEvent[]>([]);
+components/DashboardTabs.tsx:690:  const [now, setNow] = useState(Date.now());
+components/DashboardTabs.tsx:692:  useEffect(() => {
+components/DashboardTabs.tsx:706:  useEffect(() => {
+components/DashboardTabs.tsx:947:  const isMzPlus = profile?.user_level === 'niveau_mz_plus';
+components/DashboardTabs.tsx:1097:  const [suggestion, setSuggestion] = useState('');
+components/DashboardTabs.tsx:1098:  const [isSending, setIsSending] = useState(false);
+components/DashboardTabs.tsx:1103:      await supabase.from('user_suggestions').insert([{ user_id: profile?.id, suggestion, type: 'suggestion' }]);

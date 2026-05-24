@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'mzplusofficial@gmail.com' ||
+        request.auth.token.email == 'equipemzplus@gmail.com' ||
+        request.auth.token.email == 'millionairezoneplus@gmail.com' ||
+        request.auth.token.email == 'admin@mz.plus'
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Entities Validation ---
+
+    function isValidLivePulseEvent(data) {
+      return data.keys().hasAll(['user_name', 'type', 'detail', 'created_at']) &&
+             data.keys().size() == 4 &&
+             data.user_name is string && data.user_name.size() > 0 && data.user_name.size() <= 50 &&
+             data.type in ['gain', 'join', 'premium', 'coaching'] &&
+             data.detail is string && data.detail.size() <= 200 &&
+             data.created_at == request.time;
+    }
+
+    function isValidAppConfig(data) {
+      return data.app_name is string && data.app_name.size() <= 100 &&
+             (data.icon_base64 == null || (data.icon_base64 is string && data.icon_base64.size() <= 1000000)) &&
+             data.is_active is bool &&
+             data.updated_at == request.time;
+    }
+
+    function isValidAnnouncement(data) {
+      return data.keys().hasAll(['title', 'content', 'button_text', 'target_tab', 'is_active', 'created_at']) &&
+             data.title is string && data.title.size() <= 100 &&
+             data.content is string && data.content.size() <= 2000 &&
+             data.button_text is string && data.button_text.size() <= 50 &&
+             data.target_tab is string &&
+             data.is_active is bool &&
+             data.created_at is timestamp;
+    }
+
+    function isValidMemberEvolution(data) {
+      return data.keys().hasAll(['user_id', 'user_name', 'type', 'created_at']) &&
+             data.user_id == request.auth.uid &&
+             data.user_name is string &&
+             data.type in ['level_up', 'formation_completed', 'achievement_unlocked'] &&
+             data.created_at == request.time;
+    }
+
+    // --- Collection Routes ---
+
+    match /live_pulse/{eventId} {
+      allow list: if true; // Publicly readable feed
+      allow get: if isValidId(eventId);
+      allow create: if isSignedIn() && isValidLivePulseEvent(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    match /mz_app_config/{configId} {
+      allow get: if isValidId(configId);
+      allow list: if false;
+      allow write: if isAdmin() && isValidAppConfig(incoming());
+    }
+
+    match /announcements/{announcementId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn() && isValidId(announcementId);
+      allow write: if isAdmin() && isValidAnnouncement(incoming());
+    }
+
+    match /evolutions/{evolutionId} {
+      allow list: if isSignedIn();
+      allow get: if isSignedIn() && isValidId(evolutionId);
+      allow create: if isSignedIn() && isValidMemberEvolution(incoming());
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (incoming().diff(existing()).affectedKeys().hasAny(['reactions', 'comment_count']))
+      );
+      allow delete: if isAdmin() || (isSignedIn() && existing().user_id == request.auth.uid);
+    }
+
+    // Test connection doc
+    match /test/connection {
+      allow read: if isSignedIn();
+    }
+  }
+}

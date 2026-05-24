@@ -1,0 +1,7 @@
+{
+  "name": "Remix: MZ+ Elite Business Hub",
+  "description": "Système de gestion haute performance pour les entrepreneurs MZ+. Dashboard d\u0027actifs et monitoring ROI.",
+  "requestFramePermissions": [
+    "notifications"
+  ]
+}
