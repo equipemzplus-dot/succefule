@@ -1,5 +1,6 @@
 /api/chariow/test  /.netlify/functions/chariow-test  200
 /api/chariow/products  /.netlify/functions/chariow-products  200
+/api/chariow/checkout  /.netlify/functions/chariow-checkout  200
 /api/send-push  /.netlify/functions/send-push  200
 /api/*  /api/:splat  200
 /*      /index.html  200

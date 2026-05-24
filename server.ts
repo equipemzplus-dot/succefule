@@ -334,6 +334,102 @@ async function startServer() {
     }
   });
 
+  // Chariow API checkout integration with CORS / OPTIONS support
+  app.use('/api/chariow/checkout', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
+  app.post('/api/chariow/checkout', async (req, res) => {
+    const apiKeys = [
+      process.env.CHARIOW_API_KEY,
+      process.env.VITE_CHARIOW_API_KEY,
+      process.env.CHARIOZ_API_KEY,
+      process.env.VITE_CHARIOZ_API_KEY
+    ];
+    const apiKey = apiKeys.find(key => key && key.trim() !== '');
+
+    if (!apiKey) {
+      return res.status(400).json({
+        success: false,
+        error: 'missing_api_key',
+        message: "La clé API Chariow (CHARIOW_API_KEY) n'a pas été trouvée dans les variables d'environnement."
+      });
+    }
+
+    const { product_id, email, first_name, last_name, phone, redirect_url } = req.body;
+
+    if (!product_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'invalid_parameters',
+        message: "Le paramètre 'product_id' est requis au format string."
+      });
+    }
+
+    try {
+      console.log(`[Chariow API Checkout] Initiating checkout for user ${email || 'unknown'} and product ${product_id}...`);
+      const response = await fetch('https://api.chariow.com/v1/checkout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey.trim()}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          product_id,
+          email,
+          first_name,
+          last_name,
+          phone,
+          redirect_url
+        })
+      });
+
+      const contentType = response.headers.get('content-type');
+      let data = null;
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json().catch(() => null);
+      } else {
+        data = await response.text().catch(() => null);
+      }
+      
+      return res.json({
+        success: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        detectedKeyLength: apiKey.length,
+        detectedKeyPreview: apiKey.length > 8 ? `${apiKey.substring(0, 4)}...${apiKey.substring(apiKey.length - 4)}` : '****'
+      });
+    } catch (error: any) {
+      console.error('[Chariow API Checkout] Error during checkout call:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'fetch_error',
+        message: "Erreur de connexion lors de l'appel à la passerelle de paiement Chariow.",
+        details: error.message
+      });
+    }
+  });
+
+  // Chariow Webhook Handler (Sales Webhook Handler)
+  app.post('/api/chariow/webhook', async (req, res) => {
+    console.log('[Chariow Webhook] Received webhook payload:', JSON.stringify(req.body));
+    // Here we can capture Pulses, Webhook logs, etc.
+    // Standard response indicating acceptance
+    res.json({
+      success: true,
+      message: 'Chariow Webhook received successfully',
+      receivedAt: new Date().toISOString()
+    });
+  });
+
   // Health Check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });

@@ -43,6 +43,8 @@ import { useAxis } from './components/features/axis/AxisProvider.tsx';
 import { AxisGuideFlow } from './components/features/axis/AxisGuideFlow.tsx';
 import { AxisChat } from './components/features/axis/AxisChat.tsx';
 import { XPRewardModal } from './components/features/gamification/XPRewardModal.tsx';
+import { MZCheckout } from './components/MZCheckout.tsx';
+import { MerciMZPlus } from './components/MerciMZPlus.tsx';
 import { ShareModal } from './components/features/gamification/ShareModal.tsx';
 import { ChallengePresentation } from './components/features/challenges/ChallengePresentation.tsx';
 import { WeeklyChallenge } from './components/features/challenges/WeeklyChallenge.tsx';
@@ -77,6 +79,8 @@ const App: React.FC = () => {
   const [storeOwnerCode, setStoreOwnerCode] = useState<string | null>(null);
   const [referrerId, setReferrerId] = useState<string | null>(null);
   const [purchaseStep, setPurchaseStep] = useState<'view' | 'processing' | 'success'>('view');
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [merciParams, setMerciParams] = useState<{ saleId: string; refId: string; prodId: string } | null>(null);
   const [isGuideActive, setIsGuideActive] = useState(false);
   const [isRPAGuideActive, setIsRPAGuideActive] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -1237,6 +1241,21 @@ const App: React.FC = () => {
         const tabParam = params.get('tab') as TabId;
         const scrollToPostParam = params.get('scroll_to_post');
 
+        // Check if returning from a successful Chariow payment session
+        const merciParam = params.get('merci');
+        const saleId = params.get('sale_id');
+        const refId = params.get('ref_id');
+        const prodIdFromMerci = params.get('prod_id');
+
+        if (merciParam === 'true' && saleId) {
+          console.log('[App] Successful checkout redirection detected:', { saleId, refId, prodIdFromMerci });
+          setMerciParams({
+            saleId,
+            refId: refId || '',
+            prodId: prodIdFromMerci || ''
+          });
+        }
+
         if (scrollToPostParam) {
           localStorage.setItem('mz_scroll_to_post', scrollToPostParam);
           (window as any).mz_scroll_to_post = scrollToPostParam;
@@ -1441,43 +1460,26 @@ const App: React.FC = () => {
     };
   }, [userProfile?.id]);
 
-  const handlePurchase = useCallback(async () => {
-    setPurchaseStep('processing');
-    
-    // Enregistrer la commission si un parrain est détecté
-    if (referrerId && customerProduct) {
-      try {
-        const { error: commError } = await supabase.from('commissions').insert([{
-          user_id: referrerId,
-          product_id: customerProduct.id,
-          amount: customerProduct.commission_amount,
-          status: 'pending'
-        }]);
-        
-        if (commError) {
-          console.error("Erreur lors de l'enregistrement de la commission:", commError);
-        } else {
-          console.log("Commission enregistrée avec succès pour l'ambassadeur:", referrerId);
-        }
-      } catch (err) {
-        console.error("Exception lors de l'enregistrement de la commission:", err);
-      }
-    }
-
-    // Redirection vers le lien final du produit
-    setTimeout(() => {
-      triggerAxisMessage('Transaction validée. Un nouvel accomplissement pour votre ascension.', 'success', 6000);
-      if (customerProduct?.final_link) {
-        window.location.href = customerProduct.final_link;
-      } else {
-        setPurchaseStep('view');
-        alert("Lien de redirection manquant pour ce produit.");
-      }
-    }, 800); // Délai suffisant pour l'enregistrement et l'effet visuel
-  }, [customerProduct, referrerId, triggerAxisMessage]);
+  const handlePurchase = useCallback(() => {
+    setShowCheckoutModal(true);
+  }, []);
 
   if (loading || !isProductChecked || initSequence) {
     return <SystemInitiator loading={loading} />;
+  }
+
+  if (merciParams) {
+    return (
+      <MerciMZPlus 
+        saleId={merciParams.saleId}
+        referrerId={merciParams.refId}
+        productId={merciParams.prodId}
+        onContinue={() => {
+          setMerciParams(null);
+          window.history.replaceState({}, '', '/');
+        }}
+      />
+    );
   }
 
   if (isAdminView) {
@@ -1497,7 +1499,20 @@ const App: React.FC = () => {
     return <StandalonePublicStore storeOwnerCode={storeOwnerCode} />;
   }
   
-  if (customerProduct) return (<ProductSalesPage product={customerProduct} onPurchase={handlePurchase} purchaseStep={purchaseStep} countdown={900} isLoggedIn={!!session} />);
+  if (customerProduct) {
+    return (
+      <>
+        <ProductSalesPage product={customerProduct} onPurchase={handlePurchase} purchaseStep={purchaseStep} countdown={900} isLoggedIn={!!session} />
+        {showCheckoutModal && (
+          <MZCheckout 
+            product={customerProduct} 
+            referrerId={referrerId || undefined} 
+            onClose={() => setShowCheckoutModal(false)} 
+          />
+        )}
+      </>
+    );
+  }
   if (!session) return <LandingPage />;
 
   const isAdmin = userProfile?.email === 'google@gmail.com' && (userProfile?.is_admin === true);

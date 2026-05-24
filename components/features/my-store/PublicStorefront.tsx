@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingBag, Star, X, Search, ChevronRight, Check } from 'lucide-react';
 import { CurrencyDisplay } from '../../ui/CurrencyDisplay';
 import { Product } from '../../../types';
+import { MZCheckout } from '../../MZCheckout';
 
 interface PublicStorefrontProps {
   products: Product[];
@@ -15,27 +16,20 @@ interface PublicStorefrontProps {
 export function PublicStorefront({ products, onClose, storeName = "Ma Boutique Officielle", referralCode, preferences }: PublicStorefrontProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [checkoutProduct, setCheckoutProduct] = useState<Product | null>(null);
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleCheckout = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (selectedProduct) {
-      window.dispatchEvent(new CustomEvent('mz-new-sale'));
-      const link = referralCode ? `${window.location.origin}/?ref=${referralCode}&prod=${selectedProduct.id}` : selectedProduct.final_link;
-      if (link) {
-        window.open(link, '_blank', 'noopener,noreferrer');
-      }
+      setCheckoutProduct(selectedProduct);
     }
   };
 
   const handleBuyNow = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
-    window.dispatchEvent(new CustomEvent('mz-new-sale'));
-    const link = referralCode ? `${window.location.origin}/?ref=${referralCode}&prod=${product.id}` : product.final_link;
-    if (link) {
-      window.open(link, '_blank', 'noopener,noreferrer');
-    }
+    setCheckoutProduct(product);
   };
 
   const theme = preferences?.theme || 'light';
@@ -266,6 +260,16 @@ export function PublicStorefront({ products, onClose, storeName = "Ma Boutique O
                </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {checkoutProduct && (
+          <MZCheckout 
+            product={checkoutProduct} 
+            referrerId={referralCode}
+            onClose={() => setCheckoutProduct(null)} 
+          />
         )}
       </AnimatePresence>
     </div>

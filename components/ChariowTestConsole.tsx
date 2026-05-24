@@ -16,7 +16,7 @@ interface TestResult {
 }
 
 export const ChariowTestConsole: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"status" | "products">("status");
+  const [activeTab, setActiveTab] = useState<"status" | "products" | "checkout">("status");
   
   // Status tab states
   const [loading, setLoading] = useState(false);
@@ -28,9 +28,119 @@ export const ChariowTestConsole: React.FC = () => {
   const [productsResult, setProductsResult] = useState<TestResult | null>(null);
   const [copiedProductsCurl, setCopiedProductsCurl] = useState(false);
   
+  // Checkout tab states
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutResult, setCheckoutResult] = useState<TestResult | null>(null);
+  const [copiedCheckoutCurl, setCopiedCheckoutCurl] = useState(false);
+  const [checkoutForm, setCheckoutForm] = useState({
+    productId: "prd_abc123",
+    email: "client@exemple.com",
+    firstName: "Jean",
+    lastName: "Dupont",
+    phoneNumber: "612345678",
+    countryCode: "FR"
+  });
+
   // Db sync states
   const [syncingProducts, setSyncingProducts] = useState(false);
   const [syncMessage, setSyncMessage] = useState<{ success: boolean; text: string } | null>(null);
+
+  const tryDevFallbackCheckout = async (payload: any): Promise<boolean> => {
+    try {
+      const devUrl = "https://ais-dev-w3kjix4goaqo4wpcrbiy53-307056059286.europe-west2.run.app/api/chariow/checkout";
+      const fallbackResponse = await fetch(devUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const fallbackContentType = fallbackResponse.headers.get("content-type") || "";
+      
+      if (fallbackContentType.includes("application/json")) {
+        const fallbackData = await fallbackResponse.json() as TestResult;
+        if (fallbackData.success) {
+          setCheckoutResult({
+            ...fallbackData,
+            isRoutedThroughDev: true
+          });
+          return true;
+        }
+      }
+    } catch (devErr) {
+      console.warn("Fallback for checkout failed:", devErr);
+    }
+    return false;
+  };
+
+  const initiateCheckout = async () => {
+    setCheckoutLoading(true);
+    setCheckoutResult(null);
+    let attemptedFallback = false;
+
+    const payload = {
+      product_id: checkoutForm.productId,
+      email: checkoutForm.email,
+      first_name: checkoutForm.firstName,
+      last_name: checkoutForm.lastName,
+      phone: {
+        number: checkoutForm.phoneNumber,
+        country_code: checkoutForm.countryCode
+      }
+    };
+
+    try {
+      const response = await fetch("/api/chariow/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const contentType = response.headers.get("content-type") || "";
+      
+      if (contentType.includes("application/json")) {
+        const data = await response.json() as TestResult;
+        
+        if (!data.success && data.error === "missing_api_key") {
+          attemptedFallback = true;
+          const fbSuccess = await tryDevFallbackCheckout(payload);
+          if (fbSuccess) return;
+        }
+        
+        setCheckoutResult(data);
+      } else {
+        const text = await response.text();
+        attemptedFallback = true;
+        const fbSuccess = await tryDevFallbackCheckout(payload);
+        if (fbSuccess) return;
+
+        setCheckoutResult({
+          success: false,
+          status: response.status,
+          statusText: response.statusText,
+          error: "html_response",
+          message: "Le serveur n'a pas retourné de JSON lors de l'appel au checkout.",
+          details: text.slice(0, 300)
+        });
+      }
+    } catch (err: unknown) {
+      if (!attemptedFallback) {
+        const fbSuccess = await tryDevFallbackCheckout(payload);
+        if (fbSuccess) return;
+      }
+
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setCheckoutResult({
+        success: false,
+        error: "fetch_error",
+        message: "Impossible de contacter l'API de checkout du serveur.",
+        details: errorMessage
+      });
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   const tryDevFallback = async (): Promise<boolean> => {
     try {
@@ -181,26 +291,33 @@ export const ChariowTestConsole: React.FC = () => {
     }
   };
 
-  // Extract products array safely from variety of API returns
+  // Extract products array safely from variety of API returns (including Chariow's exact nested structure)
   const extractProducts = (): any[] => {
     if (!productsResult || !productsResult.success) return [];
     
-    // Defensive check of standard response fields
     const nestedData = productsResult.data;
     if (!nestedData) return [];
     
+    // If it is directly an array
     if (Array.isArray(nestedData)) {
       return nestedData;
     }
+    
+    // If nestedData has standard structure: { data: { products: [...] } }
+    if (nestedData.data && nestedData.data.products && Array.isArray(nestedData.data.products)) {
+      return nestedData.data.products;
+    }
+
+    // If nestedData has products property directly: { products: [...] }
     if (nestedData.products && Array.isArray(nestedData.products)) {
       return nestedData.products;
     }
+
+    // If nestedData.data is directly the array: { data: [...] }
     if (nestedData.data && Array.isArray(nestedData.data)) {
       return nestedData.data;
     }
-    if (Array.isArray(productsResult)) {
-      return productsResult;
-    }
+    
     return [];
   };
 
@@ -216,15 +333,30 @@ export const ChariowTestConsole: React.FC = () => {
 
     try {
       // Map products to database format
-      const mappedList = rawList.map((cp: any) => ({
-        id: String(cp.id || cp._id || `ch_${Math.random().toString(36).substr(2, 9)}`),
-        name: cp.name || cp.title || "Produit Chariow",
-        description: cp.description || cp.desc || "Pas de description fournie.",
-        price: Number(cp.price) || 0,
-        commission_amount: Number(cp.commission_amount || cp.commission || Math.floor((Number(cp.price) || 0) * 0.4)),
-        image_url: cp.image_url || cp.imageUrl || cp.image || cp.thumbnail || "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
-        final_link: cp.final_link || cp.finalLink || cp.link || cp.url || cp.checkout_url || "https://api.chariow.com"
-      }));
+      const mappedList = rawList.map((cp: any) => {
+        // Safe price extraction with standard Chariow pricing path
+        const rawPrice = cp.price || cp.pricing?.price?.value || 0;
+        const convertedPrice = Number(rawPrice) || 0;
+        
+        // Safe default commission deduction of 40% if not specified
+        const rawCommission = cp.commission_amount || cp.commission || Math.floor(convertedPrice * 0.4);
+        const commission = Number(rawCommission) || 0;
+
+        // Clean link construction for Chariow checkout
+        const slugOrId = cp.slug || cp.id;
+        const fallbackLink = slugOrId ? `https://mzplus.mychariow.shop/${slugOrId}/checkout` : "https://api.chariow.com";
+        const link = cp.final_link || cp.finalLink || cp.link || cp.url || cp.checkout_url || fallbackLink;
+
+        return {
+          id: String(cp.id || cp._id || `ch_${Math.random().toString(36).substr(2, 9)}`),
+          name: cp.name || cp.title || "Produit Chariow",
+          description: cp.description || cp.desc || "Pas de description fournie.",
+          price: convertedPrice,
+          commission_amount: commission,
+          image_url: cp.image_url || cp.imageUrl || cp.image || cp.thumbnail || "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+          final_link: link
+        };
+      });
 
       // Insert/Upsert into Supabase products table
       console.log(`[Chariow Sync] Syncing ${mappedList.length} products to products database...`);
@@ -302,10 +434,18 @@ export const ChariowTestConsole: React.FC = () => {
           >
             Produits (v1)
           </button>
+          <button
+            onClick={() => setActiveTab("checkout")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === "checkout" ? "bg-amber-500 text-black shadow-md" : "text-neutral-400 hover:text-white"
+            }`}
+          >
+            Paiement (v1)
+          </button>
         </div>
       </div>
 
-      {activeTab === "status" ? (
+      {activeTab === "status" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase text-neutral-400 font-bold tracking-widest">Vérification de connectivité générale :</span>
@@ -447,7 +587,9 @@ export const ChariowTestConsole: React.FC = () => {
             </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {activeTab === "products" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase text-neutral-400 font-bold tracking-widest">Récupération des produits Chariow v1 :</span>
@@ -486,7 +628,7 @@ export const ChariowTestConsole: React.FC = () => {
                     <span>Copier curl</span>
                   </>
                 )}
-              </button>
+               </button>
             </div>
             <code className="block text-[10px] font-mono text-neutral-400 bg-neutral-900/60 p-2.5 rounded border border-neutral-800/40 leading-relaxed whitespace-pre overflow-x-auto select-all">
               {curlProductsCommand}
@@ -542,10 +684,12 @@ export const ChariowTestConsole: React.FC = () => {
                     // Extract values dynamically using mapping variables
                     const id = prod.id || prod._id || `ch_${idx}`;
                     const name = prod.name || prod.title || "Produit Chariow";
-                    const price = prod.price || 0;
+                    const price = prod.price || prod.pricing?.price?.value || 0;
                     const commission = prod.commission_amount || prod.commission || Math.floor((Number(price) || 0) * 0.4);
                     const image = prod.image_url || prod.imageUrl || prod.image || prod.thumbnail || "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
-                    const link = prod.final_link || prod.finalLink || prod.link || prod.url || prod.checkout_url || "https://api.chariow.com";
+                    const slugOrId = prod.slug || prod.id;
+                    const fallbackLink = slugOrId ? `https://mzplus.mychariow.shop/${slugOrId}/checkout` : "https://api.chariow.com";
+                    const link = prod.final_link || prod.finalLink || prod.link || prod.url || prod.checkout_url || fallbackLink;
                     
                     return (
                       <div key={id} className="bg-neutral-900 border border-neutral-800/80 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden">
@@ -626,6 +770,239 @@ export const ChariowTestConsole: React.FC = () => {
               </h4>
               <p className="text-[11px] text-neutral-500 max-w-md mx-auto leading-relaxed">
                 Appuyez sur le bouton ci-dessus pour récupérer directement les produits hébergés sur votre compte Chariow et les synchroniser en 1 clic dans l'application MZ+.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "checkout" && (
+        <div className="space-y-4 animate-fade-in">
+          {/* Header check */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-[10px] uppercase text-neutral-400 font-bold tracking-widest">
+              Générer une session de paiement (POST /checkout) :
+            </span>
+
+            <button
+              onClick={initiateCheckout}
+              disabled={checkoutLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-neutral-800 disabled:text-neutral-600 text-black text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-amber-500/10 active:scale-95 cursor-pointer disabled:pointer-events-none"
+            >
+              {checkoutLoading ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <RefreshCw size={14} />
+              )}
+              {checkoutLoading ? "Génération..." : "Initier le paiement"}
+            </button>
+          </div>
+
+          {/* Checkout configuration Form */}
+          <div className="bg-neutral-950 border border-neutral-800 p-5 rounded-2xl space-y-4">
+            <h4 className="text-xs font-black uppercase tracking-tight text-neutral-300 border-b border-neutral-800/80 pb-2">
+              Paramètres de la Transaction
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Product selection/id */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-neutral-400">ID du Produit</label>
+                <input
+                  type="text"
+                  placeholder="prd_abc123"
+                  className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 text-xs text-white"
+                  value={checkoutForm.productId}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, productId: e.target.value })}
+                />
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-neutral-400">Email Client</label>
+                <input
+                  type="email"
+                  placeholder="client@exemple.com"
+                  className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 text-xs text-white"
+                  value={checkoutForm.email}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
+                />
+              </div>
+
+              {/* First Name */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-neutral-400">Prénom Client</label>
+                <input
+                  type="text"
+                  placeholder="Jean"
+                  className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 text-xs text-white"
+                  value={checkoutForm.firstName}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, firstName: e.target.value })}
+                />
+              </div>
+
+              {/* Last Name */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-neutral-400">Nom Client</label>
+                <input
+                  type="text"
+                  placeholder="Dupont"
+                  className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 text-xs text-white"
+                  value={checkoutForm.lastName}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, lastName: e.target.value })}
+                />
+              </div>
+
+              {/* Phone code & number */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-neutral-400">Indicatif pays</label>
+                <input
+                  type="text"
+                  placeholder="FR"
+                  className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 text-xs text-white"
+                  value={checkoutForm.countryCode}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, countryCode: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-neutral-400 font-mono">Mobile (numéro)</label>
+                <input
+                  type="text"
+                  placeholder="612345678"
+                  className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 text-xs text-white"
+                  value={checkoutForm.phoneNumber}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, phoneNumber: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Quick Helper Dropdown if products are fetched */}
+            {fetchedProductsList.length > 0 && (
+              <div className="pt-2 border-t border-neutral-900/40">
+                <span className="text-[10px] text-amber-400/85 font-bold uppercase tracking-wide block mb-1.5">
+                  ⚡ Utiliser un produit détecté depuis votre catalogue Chariow :
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {fetchedProductsList.slice(0, 6).map((p: any) => {
+                    const id = p.id || p._id || "unknown";
+                    const title = p.name || p.title || "Produit Chariow";
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setCheckoutForm({ ...checkoutForm, productId: id })}
+                        className={`text-[10px] py-1.5 px-3 rounded-lg border text-left transition-all font-semibold ${
+                          checkoutForm.productId === id
+                            ? "bg-amber-500/10 border-amber-500 text-amber-400"
+                            : "bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white"
+                        }`}
+                      >
+                        {title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Curl snippet display */}
+          <div className="bg-black/40 border border-neutral-800/80 rounded-xl p-4 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black uppercase text-neutral-400 tracking-wider">
+                Requête de paiement équivalente (Doc Chariow POST) :
+              </span>
+              <button
+                onClick={() => {
+                  const payloadStr = `curl -X POST "https://api.chariow.com/v1/checkout" \\\n  -H "Authorization: Bearer VOTRE_CLE_API" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "product_id": "${checkoutForm.productId}",\n    "email": "${checkoutForm.email}",\n    "first_name": "${checkoutForm.firstName}",\n    "last_name": "${checkoutForm.lastName}",\n    "phone": {\n      "number": "${checkoutForm.phoneNumber}",\n      "country_code": "${checkoutForm.countryCode}"\n    }\n  }'`;
+                  navigator.clipboard.writeText(payloadStr);
+                  setCopiedCheckoutCurl(true);
+                  setTimeout(() => setCopiedCheckoutCurl(false), 2000);
+                }}
+                className="text-[10px] flex items-center gap-1 text-neutral-500 hover:text-white transition-colors cursor-pointer"
+              >
+                {copiedCheckoutCurl ? (
+                  <>
+                    <Check size={12} className="text-green-500" />
+                    <span className="text-green-500">Copié</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} />
+                    <span>Copier curl</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <code className="block text-[10px] font-mono text-neutral-400 bg-neutral-900/60 p-2.5 rounded border border-neutral-800/40 leading-relaxed whitespace-pre overflow-x-auto select-all">
+              {`curl -X POST "https://api.chariow.com/v1/checkout" \\\n  -H "Authorization: Bearer VOTRE_CLE_API" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "product_id": "${checkoutForm.productId}",\n    "email": "${checkoutForm.email}",\n    "first_name": "${checkoutForm.firstName}",\n    "last_name": "${checkoutForm.lastName}",\n    "phone": {\n      "number": "${checkoutForm.phoneNumber}",\n      "country_code": "${checkoutForm.countryCode}"\n    }\n  }'`}
+            </code>
+          </div>
+
+          {/* Checkout Result Payload response */}
+          {checkoutResult && (
+            <div className="space-y-3 animate-fade-in">
+              <div className={`p-4 rounded-xl border ${
+                checkoutResult.success 
+                  ? "bg-[#22c55e]/10 border-green-500/30 text-green-400" 
+                  : "bg-red-500/10 border-red-500/30 text-red-100"
+              }`}>
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 shrink-0">
+                    {checkoutResult.success ? (
+                      <CheckCircle size={18} className="text-green-500" />
+                    ) : (
+                      <XCircle size={18} className="text-red-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <h4 className="text-xs font-black uppercase tracking-tight text-white leading-tight">
+                      {checkoutResult.success 
+                        ? "Paiement Initié (201 Created / 200 OK) !" 
+                        : `Erreur d'Initiation (${checkoutResult.status || 'Erreur'})`}
+                    </h4>
+                    <p className="text-[11px] font-medium text-neutral-400 leading-relaxed">
+                      {checkoutResult.message || (checkoutResult.success ? "La session de paiement Chariow a été configurée avec succès." : "La transaction n'a pas pu être initiée.")}
+                    </p>
+
+                    {checkoutResult.isRoutedThroughDev && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl mt-2 text-left text-[10px]">
+                        Transaction simulée avec succès dans l'environnement actif.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0b0b0b] rounded-xl border border-neutral-900 overflow-hidden">
+                <div className="px-4 py-2.5 bg-neutral-900/40 border-b border-neutral-900 flex justify-between items-center">
+                  <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest">
+                    Réponse JSON Chariow
+                  </span>
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-black ${
+                    checkoutResult.success ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                  }`}>
+                    HTTP {checkoutResult.status || 201}
+                  </span>
+                </div>
+                <div className="p-4 overflow-x-auto max-h-[180px]">
+                  <pre className="text-[10px] font-mono text-neutral-400 leading-relaxed overflow-x-auto whitespace-pre-wrap font-bold">
+                    {JSON.stringify(checkoutResult.data || checkoutResult, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!checkoutResult && !checkoutLoading && (
+            <div className="bg-neutral-900/40 rounded-xl p-6 border border-neutral-900 text-center space-y-2">
+              <AlertCircle className="mx-auto text-neutral-600 animate-[pulse_2s_infinite]" size={24} />
+              <h4 className="text-xs font-bold text-neutral-300 uppercase tracking-wide">
+                Garantie d'intégration de transaction v1
+              </h4>
+              <p className="text-[11px] text-neutral-500 max-w-sm mx-auto leading-relaxed">
+                Configurez les variables clients ci-dessus puis cliquez pour tester un appel à l'API de paiement Chariow en situation réelle.
               </p>
             </div>
           )}
