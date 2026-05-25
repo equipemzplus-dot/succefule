@@ -66,19 +66,69 @@ export class ChariowService {
   }
 
   /**
-   * Safe fetch products list from raw database or proxy API
+   * Safe fetch products list from Chariow API and map them to our internal Product interface
    */
   static async getProducts(): Promise<Product[]> {
     try {
+      console.log('[ChariowService] Fetching products list from proxy API...');
       const response = await fetch('/api/chariow/products');
-      if (response.ok) {
-        const resJson = await response.json();
-        if (resJson && resJson.success && resJson.data) {
-          return Array.isArray(resJson.data) ? resJson.data : (resJson.data.products || []);
-        }
+      if (!response.ok) {
+        console.warn(`[ChariowService] Proxy API returned status ${response.status}`);
+        return [];
       }
+
+      const resJson = await response.json();
+      if (!resJson || !resJson.success || !resJson.data) {
+        console.warn('[ChariowService] Proxy API response was not successful or lacks data');
+        return [];
+      }
+
+      const rawData = resJson.data;
+      let rawList: any[] = [];
+
+      // Safe deep extraction logic matching ChariowTestConsole.tsx
+      if (Array.isArray(rawData)) {
+        rawList = rawData;
+      } else if (rawData.data && rawData.data.products && Array.isArray(rawData.data.products)) {
+        rawList = rawData.data.products;
+      } else if (rawData.products && Array.isArray(rawData.products)) {
+        rawList = rawData.products;
+      } else if (rawData.data && Array.isArray(rawData.data)) {
+        rawList = rawData.data;
+      } else {
+        console.warn('[ChariowService] Unable to locate products array in Chariow payload structures:', rawData);
+        return [];
+      }
+
+      // Map raw list to MZ+ internal Product schema
+      const mappedProducts: Product[] = rawList.map((cp: any) => {
+        const rawPrice = cp.price || cp.pricing?.price?.value || 0;
+        const convertedPrice = Number(rawPrice) || 0;
+        
+        // Calculate 40% default commission if not specified
+        const rawCommission = cp.commission_amount || cp.commission || Math.floor(convertedPrice * 0.4);
+        const commission = Number(rawCommission) || 0;
+
+        // Custom checkout link construction using Chariow URL structures or fallbacks
+        const slugOrId = cp.slug || cp.id;
+        const fallbackLink = slugOrId ? `https://mzplus.mychariow.shop/${slugOrId}/checkout` : "https://api.chariow.com";
+        const link = cp.final_link || cp.finalLink || cp.link || cp.url || cp.checkout_url || fallbackLink;
+
+        return {
+          id: String(cp.id || cp._id || `ch_${Math.random().toString(36).substr(2, 9)}`),
+          name: cp.name || cp.title || "Produit Chariow",
+          description: cp.description || cp.desc || "Pas de description de produit fournie.",
+          price: convertedPrice,
+          commission_amount: commission,
+          image_url: cp.image_url || cp.imageUrl || cp.image || cp.thumbnail || "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+          final_link: link
+        };
+      });
+
+      console.log(`[ChariowService] Successfully loaded & mapped ${mappedProducts.length} products from Chariow API.`);
+      return mappedProducts;
     } catch (err) {
-      console.warn('[ChariowService] Failed to load products via proxy API, falling back to local database fetch', err);
+      console.warn('[ChariowService] Error loading or mapping products from Chariow API:', err);
     }
     return [];
   }

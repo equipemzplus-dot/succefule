@@ -88,7 +88,8 @@ export const MZCheckout: React.FC<MZCheckoutProps> = ({
       if (!res.success) {
         // Handle the specific error received from API (e.g. 404 Product not found)
         const errorMessage = res.data?.message || res.message || 'La transaction n’a pas pu être initiée.';
-        const statusText = res.status ? `HTTP ${res.status}` : '';
+        const statusVal = (res as any).status || res.data?.status;
+        const statusText = statusVal ? `HTTP ${statusVal}` : '';
         
         setErrorObj({
           message: `Réponse Chariow vide ou invalide : ${errorMessage}`,
