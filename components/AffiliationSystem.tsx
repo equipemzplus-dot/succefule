@@ -117,8 +117,38 @@ export const AffiliationSystem: React.FC<AffiliationSystemProps> = ({
     price: 0,
     commission_amount: 0,
     image_url: '',
-    final_link: ''
+    final_link: '',
+    chariow_product_id: ''
   });
+  const [chariowProducts, setChariowProducts] = useState<any[]>([]);
+  const [loadingChariowProducts, setLoadingChariowProducts] = useState(false);
+
+  const fetchChariowProducts = async () => {
+    setLoadingChariowProducts(true);
+    try {
+      const response = await fetch('/api/chariow/products');
+      const json = await response.json();
+      if (json && json.success) {
+        let prodsList = [];
+        const raw = json.data;
+        if (Array.isArray(raw)) prodsList = raw;
+        else if (raw?.data?.products && Array.isArray(raw.data.products)) prodsList = raw.data.products;
+        else if (raw?.products && Array.isArray(raw.products)) prodsList = raw.products;
+        else if (raw?.data && Array.isArray(raw.data)) prodsList = raw.data;
+        setChariowProducts(prodsList);
+      }
+    } catch (e) {
+      console.error("Error fetching Chariow products for dropdown mapping:", e);
+    } finally {
+      setLoadingChariowProducts(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showProductForm && isAdminView) {
+      fetchChariowProducts();
+    }
+  }, [showProductForm, isAdminView]);
 
   const fetchData = useCallback(async (retryCount = 0) => {
     try {
@@ -193,10 +223,20 @@ export const AffiliationSystem: React.FC<AffiliationSystemProps> = ({
     try {
       if (editingProduct) {
         const { error } = await supabase.from('products').update(productFormData).eq('id', editingProduct.id);
-        if (error) throw error;
+        if (error) {
+          if (error.message?.includes('chariow_product_id') || error.code === '42703') {
+            throw new Error("La colonne 'chariow_product_id' n'existe pas dans la table 'products' de Supabase. Pour pouvoir l'utiliser, veuillez copier et exécuter le script SQL de migration (migration_chariow_association.sql) dans l'éditeur SQL de votre tableau de bord Supabase.");
+          }
+          throw error;
+        }
       } else {
         const { error } = await supabase.from('products').insert([productFormData]);
-        if (error) throw error;
+        if (error) {
+          if (error.message?.includes('chariow_product_id') || error.code === '42703') {
+            throw new Error("La colonne 'chariow_product_id' n'existe pas dans la table 'products' de Supabase. Pour pouvoir l'utiliser, veuillez copier et exécuter le script SQL de migration (migration_chariow_association.sql) dans l'éditeur SQL de votre tableau de bord Supabase.");
+          }
+          throw error;
+        }
 
         // Déclencher la notification broadcast pour le nouveau produit
         try {
@@ -215,7 +255,7 @@ export const AffiliationSystem: React.FC<AffiliationSystemProps> = ({
       }
       setShowProductForm(false);
       setEditingProduct(null);
-      setProductFormData({ name: '', description: '', price: 0, commission_amount: 0, image_url: '', final_link: '' });
+      setProductFormData({ name: '', description: '', price: 0, commission_amount: 0, image_url: '', final_link: '', chariow_product_id: '' });
       fetchData();
     } catch (err: any) { alert(err.message); } finally { setIsSavingProduct(false); }
   };
@@ -243,7 +283,8 @@ export const AffiliationSystem: React.FC<AffiliationSystemProps> = ({
       price: product.price || 0,
       commission_amount: product.commission_amount || 0,
       image_url: product.image_url || '',
-      final_link: product.final_link || ''
+      final_link: product.final_link || '',
+      chariow_product_id: product.chariow_product_id || ''
     });
     setShowProductForm(true);
   }  // --- RENDU ADMIN : GESTION DES VENTES ---
@@ -456,6 +497,33 @@ export const AffiliationSystem: React.FC<AffiliationSystemProps> = ({
                   </div>
                   <input required className="w-full bg-black border border-white/10 rounded-xl p-4 text-xs text-white" placeholder="URL Image" value={productFormData.image_url} onChange={e => setProductFormData({...productFormData, image_url: e.target.value})} />
                   <input required className="w-full bg-black border border-white/10 rounded-xl p-4 text-xs text-white" placeholder="Lien de livraison final" value={productFormData.final_link} onChange={e => setProductFormData({...productFormData, final_link: e.target.value})} />
+                  
+                  <div className="space-y-1 my-2 text-left">
+                    <label className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block">Associer à un produit Chariow (Optionnel)</label>
+                    <select 
+                      className="w-full bg-black border border-white/10 rounded-xl p-4 text-xs text-white uppercase font-bold tracking-wider"
+                      value={productFormData.chariow_product_id || ''} 
+                      onChange={e => setProductFormData({...productFormData, chariow_product_id: e.target.value})}
+                    >
+                      <option value="">-- Aucun produit Chariow (Paiement classique) --</option>
+                      {loadingChariowProducts ? (
+                        <option disabled>Chargement des produits Chariow...</option>
+                      ) : (
+                        chariowProducts.map((p: any) => {
+                          const pId = p.id || p._id;
+                          const pName = p.name || p.title || "Produit sans nom";
+                          const pPrice = p.price || p.pricing?.price?.value || 0;
+                          return (
+                            <option key={pId} value={pId}>
+                              {pName} ({pPrice} FCFA)
+                            </option>
+                          );
+                        })
+                      )}
+                    </select>
+                    <p className="text-[9px] text-neutral-500 italic">Si configuré, cela redirigera vers le parcours de paiement personnalisé Chariow après capture d'identité.</p>
+                  </div>
+
                   <PrimaryButton type="submit" fullWidth isLoading={isSavingProduct}>Enregistrer le produit</PrimaryButton>
                </form>
             </GoldBorderCard>

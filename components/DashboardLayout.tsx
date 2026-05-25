@@ -179,6 +179,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const menuItems = [
     { id: 'dashboard' as TabId, label: 'Tableau de Bord', icon: Home },
+    ...(isAdmin ? [{ id: 'admin' as TabId, label: 'Administration 👑', icon: ShieldCheck }] : []),
     { id: 'bonuses' as TabId, label: 'Mes Bonus Élite', icon: Gift },
     { id: 'axis' as TabId, label: 'Axis AI', icon: Sparkles },
     { id: 'profile' as TabId, label: 'Mon Profil Élite', icon: User },

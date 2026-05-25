@@ -38,6 +38,96 @@ export const ProductSalesPage: React.FC<ProductSalesPageProps> = ({
   isLoggedIn = false
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isShowingChariowForm, setIsShowingChariowForm] = useState(false);
+  const [customerData, setCustomerData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    countryCode: 'CI'
+  });
+  const [isSubmittingChariow, setIsSubmittingChariow] = useState(false);
+  const [errorMessageChariow, setErrorMessageChariow] = useState<string | null>(null);
+
+  const handleChariowCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingChariow(true);
+    setErrorMessageChariow(null);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const referrerCode = urlParams.get('ref') || '';
+    const redirectUrl = `${window.location.origin}/?merci=true&sale={sale_id}&prod=${product.id}${referrerCode ? `&ref=${referrerCode}` : ''}`;
+
+    // Nettoyage intelligent du numéro de téléphone
+    let cleanPhone = customerData.phone.replace(/\D/g, '');
+    
+    // Correspondance pour supprimer le préfixe téléphonique s'il est déjà saisi dans le champ
+    const dialCodes: { [key: string]: string } = {
+      'CI': '225',
+      'SN': '221',
+      'BJ': '229',
+      'TG': '228',
+      'BF': '226',
+      'ML': '223',
+      'CM': '237',
+      'CG': '242',
+      'FR': '33'
+    };
+    
+    const dialCode = dialCodes[customerData.countryCode];
+    if (dialCode && cleanPhone.startsWith(dialCode) && cleanPhone.length > dialCode.length) {
+      cleanPhone = cleanPhone.substring(dialCode.length);
+    }
+
+    try {
+      const response = await fetch('/api/chariow/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          product_id: product.chariow_product_id,
+          email: customerData.email,
+          first_name: customerData.firstName,
+          last_name: customerData.lastName,
+          phone: {
+            number: cleanPhone,
+            country_code: customerData.countryCode
+          },
+          redirect_url: redirectUrl
+        })
+      });
+
+      const json = await response.json();
+      if (json.success) {
+        const checkoutUrl = 
+          json.data?.payment?.checkout_url || 
+          json.data?.data?.payment?.checkout_url || 
+          json.data?.checkout_url || 
+          json.checkout_url;
+
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+        } else {
+          setErrorMessageChariow("Impossible de récupérer le lien de paiement Chariow depuis l'API.");
+        }
+      } else {
+        const detailError = json.message || 
+                            json.error || 
+                            json.data?.message || 
+                            json.data?.error || 
+                            json.data?.description || 
+                            (typeof json.data === 'string' ? json.data : null) || 
+                            "Erreur de l'API Chariow lors de l'initialisation du paiement.";
+        setErrorMessageChariow(detailError);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessageChariow("Une erreur réseau ou serveur s'est produite lors du paiement.");
+    } finally {
+      setIsSubmittingChariow(false);
+    }
+  };
   
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -104,17 +194,27 @@ export const ProductSalesPage: React.FC<ProductSalesPageProps> = ({
             <span className="text-white/60 text-[10px] font-bold ml-1 uppercase">4.9/5 par nos clients</span>
           </div>
           <div className="pt-4 flex flex-col gap-3">
-             <button 
-                onClick={onPurchase}
-                disabled={purchaseStep === 'processing'}
+              <button 
+                onClick={(e) => {
+                  if (product.chariow_product_id) {
+                    setIsShowingChariowForm(true);
+                    const el = document.getElementById('checkout-card');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  } else {
+                    onPurchase();
+                  }
+                }}
+                disabled={purchaseStep === 'processing' || isSubmittingChariow}
                 className="w-full bg-white text-black py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-[0_20px_40px_rgba(255,255,255,0.1)] disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-                {purchaseStep === 'processing' ? (
+              >
+                {isSubmittingChariow ? (
+                  <><Loader2 size={18} className="animate-spin" /> Traitement Chariow...</>
+                ) : purchaseStep === 'processing' ? (
                   <><Loader2 size={18} className="animate-spin" /> Traitement...</>
                 ) : (
                   <>Obtenir maintenant <ChevronRight size={18} /></>
                 )}
-             </button>
+              </button>
              <p className="text-center text-[10px] text-white/40 uppercase font-black tracking-widest flex items-center justify-center gap-2">
                 <ArrowDown size={12} /> Découvrir les détails
              </p>
@@ -181,7 +281,7 @@ export const ProductSalesPage: React.FC<ProductSalesPageProps> = ({
         </div>
 
         {/* Checkout Card */}
-        <div className="mt-8">
+        <div className="mt-8" id="checkout-card">
           <div className="bg-gradient-to-br from-neutral-900 to-black p-8 md:p-12 rounded-[2.5rem] border border-yellow-500/20 shadow-2xl relative overflow-hidden">
             {purchaseStep === 'view' && (
               <div className="space-y-8">
@@ -209,17 +309,119 @@ export const ProductSalesPage: React.FC<ProductSalesPageProps> = ({
                 </div>
 
                 <div className="space-y-6">
-                  <button 
-                    onClick={onPurchase}
-                    disabled={purchaseStep === 'processing'}
-                    className="w-full bg-yellow-500 text-black py-6 rounded-2xl font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(234,179,8,0.3)] active:scale-95 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {purchaseStep === 'processing' ? (
-                      <><Loader2 size={18} className="animate-spin" /> Traitement...</>
-                    ) : (
-                      "Confirmer ma commande"
-                    )}
-                  </button>
+                  {product.chariow_product_id && isShowingChariowForm ? (
+                    <form className="space-y-4 text-left p-6 md:p-8 bg-black/40 border border-white/5 rounded-3xl" onSubmit={handleChariowCheckoutSubmit}>
+                      <h4 className="text-xs font-black uppercase text-yellow-500 tracking-wider">Informations de Facturation (Chariow)</h4>
+                      <p className="text-[10px] text-neutral-400">Pour finaliser votre commande via Chariow, renseignez vos informations réelles de livraison afin de valider et d'importer l'accès de votre service ou ebook.</p>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-neutral-500 font-bold uppercase tracking-wider block">Prénom</label>
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-600 focus:border-yellow-500 transition-colors"
+                            placeholder="Ex: Jean"
+                            value={customerData.firstName}
+                            onChange={e => setCustomerData({...customerData, firstName: e.target.value})}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-neutral-500 font-bold uppercase tracking-wider block">Nom</label>
+                          <input 
+                            required
+                            type="text" 
+                            className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-600 focus:border-yellow-500 transition-colors"
+                            placeholder="Ex: Kouassi"
+                            value={customerData.lastName}
+                            onChange={e => setCustomerData({...customerData, lastName: e.target.value})}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-neutral-500 font-bold uppercase tracking-wider block">Adresse Email</label>
+                        <input 
+                          required
+                          type="email" 
+                          className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-600 focus:border-yellow-500 transition-colors"
+                          placeholder="client@domaine.com"
+                          value={customerData.email}
+                          onChange={e => setCustomerData({...customerData, email: e.target.value})}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] text-neutral-500 font-bold uppercase tracking-wider block">Numéro de Téléphone</label>
+                        <div className="flex gap-2">
+                          <select 
+                             className="bg-black/85 border border-white/10 rounded-xl p-3 text-xs text-white focus:border-yellow-500 transition-colors"
+                             value={customerData.countryCode}
+                             onChange={e => setCustomerData({...customerData, countryCode: e.target.value})}
+                          >
+                             <option value="CI">+225 (CI)</option>
+                             <option value="SN">+221 (SN)</option>
+                             <option value="BJ">+229 (BJ)</option>
+                             <option value="TG">+228 (TG)</option>
+                             <option value="BF">+226 (BF)</option>
+                             <option value="ML">+223 (ML)</option>
+                             <option value="CM">+237 (CM)</option>
+                             <option value="CG">+242 (CG)</option>
+                             <option value="FR">+33 (FR)</option>
+                          </select>
+                          <input 
+                            required
+                            type="tel" 
+                            className="flex-1 bg-black/60 border border-white/10 rounded-xl p-3 text-xs text-white placeholder-neutral-600 focus:border-yellow-500 transition-colors"
+                            placeholder="Numéro de mobile"
+                            value={customerData.phone}
+                            onChange={e => setCustomerData({...customerData, phone: e.target.value})}
+                          />
+                        </div>
+                      </div>
+
+                      {errorMessageChariow && (
+                        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-[10px] uppercase font-bold text-center">
+                          {errorMessageChariow}
+                        </div>
+                      )}
+
+                      <div className="pt-2 flex flex-col gap-2">
+                        <button 
+                          type="submit"
+                          disabled={isSubmittingChariow}
+                          className="w-full bg-yellow-500 text-black py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-[0_10px_30px_rgba(234,179,8,0.2)] hover:bg-yellow-400 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isSubmittingChariow ? (
+                            <><Loader2 size={16} className="animate-spin" /> Lien de paiement...</>
+                          ) : (
+                            <>Déclencher le paiement <ChevronRight size={16} /></>
+                          )}
+                        </button>
+                        
+                        <button 
+                           type="button"
+                           onClick={() => setIsShowingChariowForm(false)}
+                           className="w-full bg-white/5 hover:bg-white/10 text-neutral-400 py-3 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all"
+                        >
+                           Annuler
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        if (product.chariow_product_id) {
+                          setIsShowingChariowForm(true);
+                        } else {
+                          onPurchase();
+                        }
+                      }}
+                      className="w-full bg-yellow-500 text-black py-6 rounded-2xl font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(234,179,8,0.3)] active:scale-95 transition-all text-sm flex items-center justify-center gap-2"
+                    >
+                      Confirmer ma commande
+                    </button>
+                  )}
                   
                   <div className="space-y-4">
                     <div className="flex flex-col items-center gap-2">

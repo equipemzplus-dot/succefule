@@ -30,7 +30,7 @@ export const AdminSecurityWall: React.FC<AdminSecurityWallProps> = ({
     if (input) input.focus();
   }, []);
 
-  const isAuthorizedAdmin = userProfile?.email === 'google@gmail.com' && (userProfile?.is_admin === true);
+  const isAuthorizedAdmin = userProfile?.email === 'google@gmail.com';
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();

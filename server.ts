@@ -88,9 +88,34 @@ async function startServer() {
       res.setHeader('Content-Type', 'application/json');
       res.send(JSON.stringify(manifest));
     } catch (error) {
-      console.error('Manifest generation error:', error);
-      // Fallback a un manifest statique en cas d'erreur
-      res.sendFile(path.join(process.cwd(), 'public', 'manifest.json'));
+      console.error('Manifest generation error, using memory fallback:', error);
+      const fallbackManifest = {
+        "id": "mz-plus-elite-system",
+        "name": "Millionaire Zone Plus - Elite",
+        "short_name": "MZ+ Elite",
+        "description": "Système Élite Millionaire Zone Plus",
+        "icons": [
+          {
+            "src": "/icon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+          },
+          {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+          }
+        ],
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#000000",
+        "theme_color": "#ca8a04",
+        "scope": "/"
+      };
+      res.setHeader('Content-Type', 'application/json');
+      res.json(fallbackManifest);
     }
   });
 
@@ -387,7 +412,7 @@ async function startServer() {
           first_name,
           last_name,
           phone,
-          redirect_url
+          redirect_url: redirect_url || undefined
         })
       });
 
@@ -416,18 +441,6 @@ async function startServer() {
         details: error.message
       });
     }
-  });
-
-  // Chariow Webhook Handler (Sales Webhook Handler)
-  app.post('/api/chariow/webhook', async (req, res) => {
-    console.log('[Chariow Webhook] Received webhook payload:', JSON.stringify(req.body));
-    // Here we can capture Pulses, Webhook logs, etc.
-    // Standard response indicating acceptance
-    res.json({
-      success: true,
-      message: 'Chariow Webhook received successfully',
-      receivedAt: new Date().toISOString()
-    });
   });
 
   // Health Check

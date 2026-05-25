@@ -45,7 +45,6 @@ import { PublicStorefront } from "./PublicStorefront.tsx";
 import { StoreSettingsModal } from "./StoreSettingsModal.tsx";
 import { StoreStats } from "./StoreStats.tsx";
 import { DynamicPremiumUpsell } from "./DynamicPremiumUpsell.tsx";
-import { ChariowService } from "../../../services/ChariowService.ts";
 
 import { StoreFAQ } from "./StoreFAQ.tsx";
 
@@ -477,25 +476,8 @@ export const MyStore: React.FC<MyStoreProps> = ({
 
   const fetchData = async () => {
     try {
-      console.log("[MyStore] Loading products. Integrating with Chariow in real-time...");
-      let finalProducts: Product[] = [];
-      const chariowProds = await ChariowService.getProducts();
-
-      if (chariowProds && chariowProds.length > 0) {
-        console.log(`[MyStore] Real-time Chariow catalog detected. Synchronizing ${chariowProds.length} products to database.`);
-        // Upsert to local storage DB
-        const { error: upsertErr } = await supabase.from("products").upsert(chariowProds, { onConflict: "id" });
-        if (upsertErr) {
-          console.warn("[MyStore] Non-blocking DB upsert error:", upsertErr);
-        }
-        finalProducts = chariowProds;
-      } else {
-        console.log("[MyStore] Chariow API returned empty or is unconfigured. Querying current local products catalog...");
-        const { data: allProds } = await supabase.from("products").select("*");
-        finalProducts = allProds || [];
-      }
-
-      setProducts(finalProducts);
+      const { data: allProds } = await supabase.from("products").select("*");
+      setProducts(allProds || []);
 
       if (profile?.id) {
         const [storeRes, statsRes, commsRes] = await Promise.all([

@@ -41,6 +41,9 @@ export interface UserProfile {
   premium_trigger_history?: any[];
   store_preferences?: any;
   country_code?: string;
+  username?: string;
+  avatar_url?: string;
+  fcm_token?: string;
 }
 
 export interface Formation {
@@ -128,6 +131,7 @@ export interface Product {
   commission_amount: number;
   image_url: string;
   final_link: string;
+  chariow_product_id?: string;
 }
 
 export interface RPASubmission {
@@ -170,4 +174,4 @@ export interface PremiumWelcomePopup {
   created_at: string;
 }
 
-export type TabId = 'dashboard' | 'revenus' | 'affiliation' | 'team' | 'admin' | 'rpa' | 'coaching' | 'formation' | 'upgrade' | 'suggestions' | 'private_group' | 'community' | 'private_chat' | 'recompense' | 'flash_offer' | 'admin_push' | 'private_messaging' | 'luna_chat' | 'guides' | 'sql_console' | 'profile' | 'catalog' | 'leaderboard' | 'leaderboard_local' | 'live_withdrawals' | 'axis' | 'bonuses' | 'evolution';
+export type TabId = 'dashboard' | 'revenus' | 'affiliation' | 'team' | 'admin' | 'rpa' | 'coaching' | 'formation' | 'upgrade' | 'suggestions' | 'private_group' | 'community' | 'private_chat' | 'recompense' | 'flash_offer' | 'admin_push' | 'private_messaging' | 'luna_chat' | 'guides' | 'sql_console' | 'profile' | 'catalog' | 'leaderboard' | 'leaderboard_local' | 'live_withdrawals' | 'axis' | 'bonuses' | 'evolution' | 'weekly_challenge';
